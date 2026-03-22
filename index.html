@@ -349,11 +349,14 @@
                         <span class="timer-badge time-green" data-start="${o.timestamp}">00:00</span>
                     </div>
                     <div class="items-area">
-                        ${o.items.map(i => `
-                            <div class="item-row">
-                                <span class="item-qty">${i.qty}</span>
+                        ${o.items.map((i, index) => `
+                            <div class="item-row" style="align-items: center; ${i.ready ? 'opacity: 0.5' : ''}">
+                                <input type="checkbox" ${i.ready ? 'checked' : ''} 
+                                    style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--secondary);" 
+                                    onclick="toggleItemReady('${key}', ${index}, ${i.ready || false})">
+                                <span class="item-qty" style="margin-left: 10px;">${i.qty}</span>
                                 <div style="flex:1">
-                                    <span class="item-name">${i.name}</span>
+                                    <span class="item-name" style="${i.ready ? 'text-decoration: line-through' : ''}">${i.name}</span>
                                     ${i.drink ? `<span class="item-obs"><i class="fa-solid fa-wine-glass"></i> ${i.drink}</span>` : ''}
                                 </div>
                             </div>
@@ -386,6 +389,10 @@
                 set(ref(db, `orders/${currentOrderKey}/kitchenReady`), true);
                 closeModal();
             }
+        };
+
+        window.toggleItemReady = (orderKey, itemIndex, currentStatus) => {
+            set(ref(db, `orders/${orderKey}/items/${itemIndex}/ready`), !currentStatus);
         };
 
         window.toggleMenu = (show) => {
