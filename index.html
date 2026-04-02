@@ -361,9 +361,15 @@
                                 </div>
                             </div>
                         `).join('')}
+                        ${o.observacao ? `
+                            <div class="order-extras" style="background: #fff5f5; border-left: 3px solid #ff4d4d; color: #ff4d4d;">
+                                <strong>OBSERVAÇÃO DO CLIENTE:</strong><br>
+                                <span style="font-size: 16px; font-weight: 800;">${o.observacao.toUpperCase()}</span>
+                            </div>
+                        ` : ''}
                         ${o.extras && o.extras.length > 0 ? `
                             <div class="order-extras">
-                                <strong>OBSERVAÇÕES:</strong><br>
+                                <strong>ADICIONAIS GRATUITOS:</strong><br>
                                 ${o.extras.join(', ')}
                             </div>
                         ` : ''}
