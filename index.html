@@ -208,6 +208,8 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-body); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .menu-card.out-of-stock { filter: grayscale(1); opacity: 0.5; }
+        .out-of-stock-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-weight: 800; font-size: 10px; z-index: 5; }
     </style>
 </head>
 <body>
@@ -220,6 +222,9 @@
         <div style="display: flex; gap: 10px;">
             <button class="btn-cancel" style="padding: 10px 15px; border-radius: 8px;" onclick="toggleMenu(true)">
                 <i class="fa-solid fa-book-open"></i> CARDÁPIO
+            </button>
+            <button class="btn-cancel" style="padding: 10px 15px; border-radius: 8px; background: #334155; color: white;" onclick="toggleShoppingList(true)">
+                <i class="fa-solid fa-list-check"></i> LISTA
             </button>
         </div>
     </header>
@@ -273,6 +278,27 @@
             <h2 id="subline-modal-title" style="color: var(--primary); font-size: 18px; margin-bottom: 15px;"></h2>
             <div id="subline-ingredients-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 450px; overflow-y: auto; padding: 10px;"></div>
             <button class="btn btn-cancel" style="width: 100%; margin-top: 20px;" onclick="document.getElementById('subline-modal').style.display='none'">FECHAR</button>
+        </div>
+    </div>
+
+    <div id="shopping-list-modal" class="overlay" style="z-index: 1300;">
+        <div class="modal" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;">
+                <h2 style="font-size: 20px;">LISTA DE COMPRAS</h2>
+                <button onclick="toggleShoppingList(false)" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div style="display: flex; gap: 5px; margin-bottom: 20px;">
+                <input type="text" id="shop-item-name" placeholder="Item..." style="flex: 2; padding: 10px; border: 1px solid var(--border); border-radius: 5px;">
+                <input type="text" id="shop-item-qty" placeholder="Qtd" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 5px;">
+                <button class="btn-confirm" style="padding: 0 15px; border-radius: 5px; border: none; cursor: pointer;" onclick="addShoppingItem()">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div id="shopping-items-container" style="max-height: 350px; overflow-y: auto; text-align: left; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;"></div>
+            <div class="modal-btns">
+                <button class="btn btn-cancel" onclick="toggleShoppingList(false)">FECHAR</button>
+                <button class="btn btn-confirm" style="background: #ef4444;" onclick="clearShoppingList()">LIMPAR TUDO</button>
+            </div>
         </div>
     </div>
 
@@ -438,6 +464,12 @@
             modal.style.display = 'flex';
         };
 
+        window.toggleStockStatus = (key, currentStatus) => {
+            set(ref(db, `products/${key}/outOfStock`), !currentStatus).then(() => {
+                toggleMenu(true);
+            });
+        };
+
         window.toggleMenu = (show) => {
             const modal = document.getElementById('menu-modal');
             if(show) {
@@ -453,7 +485,7 @@
                     const sortedCats = Object.values(cats).sort((a, b) => (a.order || 0) - (b.order || 0));
                     
                     sortedCats.forEach(cat => {
-                        const catProds = Object.values(prods).filter(p => p.category === cat.name);
+                        const catProds = Object.entries(prods).filter(([_, p]) => p.category === cat.name);
                         
                         if(catProds.length > 0) {
                             const header = document.createElement('div');
@@ -465,10 +497,11 @@
                             header.innerHTML = `<h3 style="color:var(--primary); text-transform: uppercase; font-size: 14px; letter-spacing: 1px;"><i class="${cat.icon || 'fa-solid fa-tag'}"></i> ${cat.name}</h3>`;
                             grid.appendChild(header);
 
-                            catProds.forEach(p => {
+                            catProds.forEach(([key, p]) => {
                                 const card = document.createElement('div');
-                                card.className = 'menu-card';
+                                card.className = `menu-card ${p.outOfStock ? 'out-of-stock' : ''}`;
                                 card.style.cursor = 'pointer';
+                                card.style.position = 'relative';
                                 card.onclick = () => {
                                     document.getElementById('detail-img').src = p.img || 'https://via.placeholder.com/200';
                                     document.getElementById('detail-title').innerText = p.name;
@@ -476,10 +509,15 @@
                                     document.getElementById('product-detail-modal').style.display = 'flex';
                                 };
                                 card.innerHTML = `
+                                    ${p.outOfStock ? '<div class="out-of-stock-badge">ESGOTADO</div>' : ''}
                                     <img src="${p.img || 'https://via.placeholder.com/200'}" onerror="this.src='https://via.placeholder.com/200'">
                                     <div style="padding:10px">
                                         <strong style="display:block; color:var(--primary)">${p.name}</strong>
-                                        <p style="font-size:11px; margin-top:5px; color:#cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.weight || ''}</p>
+                                        <p style="font-size:11px; margin-top:5px; color:#cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:10px;">${p.weight || ''}</p>
+                                        <button onclick="event.stopPropagation(); toggleStockStatus('${key}', ${p.outOfStock || false})" 
+                                            style="width:100%; border:none; padding:8px; border-radius:5px; background:${p.outOfStock ? '#22c55e' : '#ef4444'}; color:white; font-weight:bold; cursor:pointer; font-size:10px;">
+                                            ${p.outOfStock ? 'MARCAR DISPONÍVEL' : 'MARCAR ESGOTADO'}
+                                        </button>
                                     </div>
                                 `;
                                 grid.appendChild(card);
@@ -492,7 +530,68 @@
             }
         };
 
-        // Timer Precision
+        let shoppingList = JSON.parse(localStorage.getItem('redline_shopping_list')) || [];
+
+        window.toggleShoppingList = (show) => {
+            const modal = document.getElementById('shopping-list-modal');
+            modal.style.display = show ? 'flex' : 'none';
+            if(show) renderShoppingList();
+        };
+
+        window.addShoppingItem = () => {
+            const nameInput = document.getElementById('shop-item-name');
+            const qtyInput = document.getElementById('shop-item-qty');
+            if(!nameInput.value.trim()) return;
+            shoppingList.push({
+                id: Date.now(),
+                name: nameInput.value,
+                qty: qtyInput.value || '1',
+                checked: false
+            });
+            nameInput.value = '';
+            qtyInput.value = '';
+            saveAndRenderShopping();
+        };
+
+        window.toggleShopCheck = (id) => {
+            const item = shoppingList.find(i => i.id === id);
+            if(item) item.checked = !item.checked;
+            saveAndRenderShopping();
+        };
+
+        window.clearShoppingList = () => {
+            if(confirm("Deseja apagar todos os itens da lista?")) {
+                shoppingList = [];
+                saveAndRenderShopping();
+            }
+        };
+
+        function saveAndRenderShopping() {
+            localStorage.setItem('redline_shopping_list', JSON.stringify(shoppingList));
+            renderShoppingList();
+        }
+
+        function renderShoppingList() {
+            const container = document.getElementById('shopping-items-container');
+            container.innerHTML = shoppingList.length === 0 ? '<p style="color:var(--text-dim); text-align:center;">Lista vazia</p>' : '';
+            shoppingList.forEach(item => {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.alignItems = 'center';
+                row.style.gap = '10px';
+                row.style.padding = '10px';
+                row.style.background = '#f8fafc';
+                row.style.borderRadius = '8px';
+                row.style.border = '1px solid var(--border)';
+                row.innerHTML = `
+                    <input type="checkbox" ${item.checked ? 'checked' : ''} onclick="toggleShopCheck(${item.id})" style="width:18px; height:18px; cursor:pointer;">
+                    <span style="flex:1; font-weight:600; ${item.checked ? 'text-decoration:line-through; color:var(--text-dim);' : ''}">${item.name}</span>
+                    <span style="color:var(--primary); font-weight:800;">${item.qty}</span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
         setInterval(() => {
             document.querySelectorAll('.timer-badge').forEach(el => {
                 const start = parseInt(el.dataset.start);
