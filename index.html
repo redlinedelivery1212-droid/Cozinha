@@ -287,11 +287,13 @@
                 <h2 style="font-size: 20px;">LISTA DE COMPRAS</h2>
                 <button onclick="toggleShoppingList(false)" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
             </div>
-            <div style="display: flex; gap: 5px; margin-bottom: 20px;">
-                <input type="text" id="shop-item-name" placeholder="Item..." style="flex: 2; padding: 10px; border: 1px solid var(--border); border-radius: 5px;">
-                <input type="text" id="shop-item-qty" placeholder="Qtd" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 5px;">
-                <button class="btn-confirm" style="padding: 0 15px; border-radius: 5px; border: none; cursor: pointer;" onclick="addShoppingItem()">
-                    <i class="fa-solid fa-plus"></i>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="shop-item-name" placeholder="Item..." style="flex: 2; padding: 10px; border: 1px solid var(--border); border-radius: 5px;">
+                    <input type="text" id="shop-item-qty" placeholder="Qtd" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 5px;">
+                </div>
+                <button class="btn-confirm" style="width: 100%; padding: 12px; border-radius: 5px; border: none; cursor: pointer;" onclick="addShoppingItem()">
+                    <i class="fa-solid fa-plus"></i> ADICIONAR ITEM
                 </button>
             </div>
             <div id="shopping-items-container" style="max-height: 350px; overflow-y: auto; text-align: left; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;"></div>
@@ -530,46 +532,47 @@
             }
         };
 
-        let shoppingList = JSON.parse(localStorage.getItem('redline_shopping_list')) || [];
+        let shoppingList = [];
+
+        onValue(ref(db, 'shoppingList'), (snapshot) => {
+            shoppingList = snapshot.val() || [];
+            renderShoppingList();
+        });
 
         window.toggleShoppingList = (show) => {
             const modal = document.getElementById('shopping-list-modal');
             modal.style.display = show ? 'flex' : 'none';
-            if(show) renderShoppingList();
         };
 
         window.addShoppingItem = () => {
             const nameInput = document.getElementById('shop-item-name');
             const qtyInput = document.getElementById('shop-item-qty');
             if(!nameInput.value.trim()) return;
-            shoppingList.push({
+            
+            const newItem = {
                 id: Date.now(),
                 name: nameInput.value,
                 qty: qtyInput.value || '1',
                 checked: false
-            });
+            };
+            
+            set(ref(db, 'shoppingList'), [...shoppingList, newItem]);
             nameInput.value = '';
             qtyInput.value = '';
-            saveAndRenderShopping();
         };
 
         window.toggleShopCheck = (id) => {
-            const item = shoppingList.find(i => i.id === id);
-            if(item) item.checked = !item.checked;
-            saveAndRenderShopping();
+            const newList = shoppingList.map(item => 
+                item.id === id ? { ...item, checked: !item.checked } : item
+            );
+            set(ref(db, 'shoppingList'), newList);
         };
 
         window.clearShoppingList = () => {
             if(confirm("Deseja apagar todos os itens da lista?")) {
-                shoppingList = [];
-                saveAndRenderShopping();
+                set(ref(db, 'shoppingList'), null);
             }
         };
-
-        function saveAndRenderShopping() {
-            localStorage.setItem('redline_shopping_list', JSON.stringify(shoppingList));
-            renderShoppingList();
-        }
 
         function renderShoppingList() {
             const container = document.getElementById('shopping-items-container');
