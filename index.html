@@ -210,9 +210,68 @@
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
         .menu-card.out-of-stock { filter: grayscale(1); opacity: 0.5; }
         .out-of-stock-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-weight: 800; font-size: 10px; z-index: 5; }
+
+        /* TELA DE CARREGAMENTO KDS */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #e31b13;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 30000;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .splash-logo {
+            width: 250px;
+            height: 250px;
+            animation: logoEntrance 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            margin-bottom: 20px;
+            object-fit: contain;
+        }
+
+        @keyframes logoEntrance {
+            from { transform: scale(0) rotate(-45deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .loader-bar-container {
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loader-bar-fill {
+            position: absolute;
+            top: 0; left: 0; width: 0%; height: 100%;
+            background: white;
+            box-shadow: 0 0 10px white;
+            transition: width 0.4s ease-out;
+        }
+
+        .splash-text {
+            color: white;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-top: 20px;
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
+
+    <div id="splash-screen">
+        <img src="https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/WhatsApp%20Image%202026-03-14%20at%2011.19.51%20PM%20(1).jpeg" class="splash-logo">
+        <div class="loader-bar-container">
+            <div class="loader-bar-fill" id="splash-bar"></div>
+        </div>
+        <p style="color: white; margin-top: 15px; font-size: 10px; font-weight: bold; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase;">Iniciando KDS...</p>
+        <p class="splash-text">RedLine Kitchen</p>
+    </div>
 
     <header>
         <div>
@@ -325,99 +384,126 @@
 
         let lastCount = 0;
         let currentOrderKey = null;
+        let ordersCache = "";
+
+        // Verificador Periódico (Sincronização forçada a cada 2s)
+        setInterval(() => {
+            get(ref(db, 'orders')).then(snap => {
+                const currentData = JSON.stringify(snap.val() || {});
+                if (currentData !== ordersCache) {
+                    console.log("KDS: Nova atualização de pedidos detectada.");
+                    // O onValue já lidará com a renderização, isso apenas garante o check de rede/sincronia
+                }
+            });
+        }, 2000);
 
         // Monitorar Pedidos
         onValue(ref(db, 'orders'), (snapshot) => {
-            const data = snapshot.val() || {};
-            const container = document.getElementById('orders-container');
-            const summaryBar = document.getElementById('summary-bar');
+            const bar = document.getElementById('splash-bar');
+            if(bar) bar.style.width = "100%";
+
+            const pedidosDb = snapshot.val() || {};
+            ordersCache = JSON.stringify(pedidosDb);
             
-            const today = new Date().toDateString();
+            const ordersContainer = document.getElementById('orders-container');
+            const summaryBarEl = document.getElementById('summary-bar');
             
-            // Filtra pedidos do dia, pagos, e não prontos na cozinha
-            const allOrders = Object.entries(data)
-                .filter(([_, ord]) => new Date(ord.timestamp).toDateString() === today)
+            const todayStr = new Date().toDateString();
+            
+            // Filtra pedidos do dia
+            const allOrdersList = Object.entries(pedidosDb)
+                .filter(([_, ord]) => new Date(ord.timestamp).toDateString() === todayStr)
                 .sort((a, b) => a[1].timestamp - b[1].timestamp);
 
-            const pending = allOrders.filter(([_, o]) => o.status === 'pago_confirmado' && !o.kitchenReady);
+            const pendingOrders = allOrdersList.filter(([_, o]) => o.status === 'pago_confirmado' && !o.kitchenReady);
 
             // Alerta Sonoro
-            if (pending.length > lastCount) {
+            if (pendingOrders.length > lastCount) {
                 document.getElementById('notif-sound').play().catch(() => {});
             }
-            lastCount = pending.length;
+            lastCount = pendingOrders.length;
 
-            document.getElementById('stats-text').innerText = `${pending.length} PEDIDOS EM PREPARO AGORA`;
+            document.getElementById('stats-text').innerText = `${pendingOrders.length} PEDIDOS EM PREPARO AGORA`;
 
-            // Renderizar Resumo de Itens (Summary)
-            const itemTotals = {};
-            pending.forEach(([_, o]) => {
-                o.items.forEach(i => {
-                    itemTotals[i.name] = (itemTotals[i.name] || 0) + i.qty;
-                });
+            // Renderizar Resumo de Itens
+            const itemTotalsMap = {};
+            pendingOrders.forEach(([_, o]) => {
+                if(o.items) {
+                    o.items.forEach(i => {
+                        itemTotalsMap[i.name] = (itemTotalsMap[i.name] || 0) + i.qty;
+                    });
+                }
             });
 
-            summaryBar.innerHTML = Object.entries(itemTotals).map(([name, qty]) => `
+            summaryBarEl.innerHTML = Object.entries(itemTotalsMap).map(([name, qty]) => `
                 <div class="summary-item"><span>${qty}x</span> ${name}</div>
             `).join('') || '<div style="color:var(--text-dim); font-size:12px;">Nenhum item pendente para produção em lote.</div>';
 
             // Renderizar Cards
-            if (pending.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--text-dim);">
+            if (pendingOrders.length === 0) {
+                ordersContainer.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--text-dim);">
                     <i class="fa-solid fa-mug-hot" style="font-size: 50px; margin-bottom: 15px;"></i>
                     <h2>Tudo em dia! Nenhuma comanda na fila.</h2>
                 </div>`;
-                return;
+            } else {
+                ordersContainer.innerHTML = "";
+                pendingOrders.forEach(([key, o]) => {
+                    const orderIndex = allOrdersList.findIndex(([k, _]) => k === key) + 1;
+                    const orderNum = String(orderIndex).padStart(3, '0');
+                    
+                    const card = document.createElement('div');
+                    card.className = 'order-card';
+                    card.innerHTML = `
+                        <div class="order-header">
+                            <div>
+                                <span class="order-client">${o.cliente ? o.cliente.nome : 'Cliente'}</span><br>
+                                <span class="order-id">#${orderNum}</span>
+                            </div>
+                            <span class="timer-badge time-green" data-start="${o.timestamp}">00:00</span>
+                        </div>
+                        <div class="items-area">
+                            ${o.items ? o.items.map((i, index) => {
+                                const isSubline = i.name.toLowerCase().includes("subline montado");
+                                return `
+                                <div class="item-row" style="align-items: center; ${i.ready ? 'opacity: 0.5' : ''}">
+                                    <input type="checkbox" ${i.ready ? 'checked' : ''} 
+                                        style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--secondary);" 
+                                        onclick="toggleItemReady('${key}', ${index}, ${i.ready || false})">
+                                    <span class="item-qty" style="margin-left: 10px;">${i.qty}</span>
+                                    <div style="flex:1">
+                                        <span class="item-name" style="${i.ready ? 'text-decoration: line-through' : ''}">${i.name}</span>
+                                        ${i.drink ? `<span class="item-obs"><i class="fa-solid fa-wine-glass"></i> ${i.drink}</span>` : ''}
+                                        ${isSubline ? `<button onclick='expandSubline(${JSON.stringify(i)})' style="margin-top:5px; background:var(--primary); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">EXPANDIR</button>` : ''}
+                                    </div>
+                                </div>
+                            `}).join('') : ''}
+                            ${o.observacao ? `
+                                <div class="order-extras" style="background: #fff5f5; border-left: 3px solid #ff4d4d; color: #ff4d4d;">
+                                    <strong>OBSERVAÇÃO DO CLIENTE:</strong><br>
+                                    <span style="font-size: 16px; font-weight: 800;">${o.observacao.toUpperCase()}</span>
+                                </div>
+                            ` : ''}
+                            ${o.extras && o.extras.length > 0 ? `
+                                <div class="order-extras">
+                                    <strong>ADICIONAIS GRATUITOS:</strong><br>
+                                    ${o.extras.join(', ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <button class="btn-finish" onclick="openFinishModal('${key}')">Concluir Pedido</button>
+                    `;
+                    ordersContainer.appendChild(card);
+                });
             }
 
-            container.innerHTML = "";
-            pending.forEach(([key, o]) => {
-                const orderIndex = allOrders.findIndex(([k, _]) => k === key) + 1;
-                const orderNum = String(orderIndex).padStart(3, '0');
-                
-                const card = document.createElement('div');
-                card.className = 'order-card';
-                card.innerHTML = `
-                    <div class="order-header">
-                        <div>
-                            <span class="order-client">${o.cliente.nome}</span><br>
-                            <span class="order-id">#${orderNum}</span>
-                        </div>
-                        <span class="timer-badge time-green" data-start="${o.timestamp}">00:00</span>
-                    </div>
-                    <div class="items-area">
-                        ${o.items.map((i, index) => {
-                            const isSubline = i.name.toLowerCase().includes("subline montado");
-                            return `
-                            <div class="item-row" style="align-items: center; ${i.ready ? 'opacity: 0.5' : ''}">
-                                <input type="checkbox" ${i.ready ? 'checked' : ''} 
-                                    style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--secondary);" 
-                                    onclick="toggleItemReady('${key}', ${index}, ${i.ready || false})">
-                                <span class="item-qty" style="margin-left: 10px;">${i.qty}</span>
-                                <div style="flex:1">
-                                    <span class="item-name" style="${i.ready ? 'text-decoration: line-through' : ''}">${i.name}</span>
-                                    ${i.drink ? `<span class="item-obs"><i class="fa-solid fa-wine-glass"></i> ${i.drink}</span>` : ''}
-                                    ${isSubline ? `<button onclick='expandSubline(${JSON.stringify(i)})' style="margin-top:5px; background:var(--primary); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">EXPANDIR</button>` : ''}
-                                </div>
-                            </div>
-                        `}).join('')}
-                        ${o.observacao ? `
-                            <div class="order-extras" style="background: #fff5f5; border-left: 3px solid #ff4d4d; color: #ff4d4d;">
-                                <strong>OBSERVAÇÃO DO CLIENTE:</strong><br>
-                                <span style="font-size: 16px; font-weight: 800;">${o.observacao.toUpperCase()}</span>
-                            </div>
-                        ` : ''}
-                        ${o.extras && o.extras.length > 0 ? `
-                            <div class="order-extras">
-                                <strong>ADICIONAIS GRATUITOS:</strong><br>
-                                ${o.extras.join(', ')}
-                            </div>
-                        ` : ''}
-                    </div>
-                    <button class="btn-finish" onclick="openFinishModal('${key}')">Concluir Pedido</button>
-                `;
-                container.appendChild(card);
-            });
+            // Remove Splash
+            const splashScreen = document.getElementById('splash-screen');
+            if(splashScreen) {
+                setTimeout(() => {
+                    splashScreen.style.opacity = '0';
+                    setTimeout(() => splashScreen.remove(), 800);
+                }, 1000);
+            }
         });
 
         // Funções Globais
