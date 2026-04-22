@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RedLine | KDS Profissional</title>
-    <link rel="icon" type="image/png" href="https://cxpdwntsjvyvyglkwgbj.supabase.co/storage/v1/object/public/pics/xccxccvvv.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-body: #f1f5f9;
@@ -311,7 +310,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, get, query, limitToLast } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
         const firebaseConfig = {
         apiKey: "AIzaSyBEQaIIAYGSDRteg_jERuHtfjQRMpaQYmU",
@@ -330,35 +329,29 @@
         let currentOrderKey = null;
         let ordersCache = "";
 
-        // Verificador Periódico (Sincronização forçada a cada 2s)
-        setInterval(() => {
-            get(ref(db, 'orders')).then(snap => {
-                const currentData = JSON.stringify(snap.val() || {});
-                if (currentData !== ordersCache) {
-                    console.log("KDS: Nova atualização de pedidos detectada.");
-                    // O onValue já lidará com a renderização, isso apenas garante o check de rede/sincronia
-                }
-            });
-        }, 2000);
+        // Verificador removido para ganho de performance - O onValue já garante a atualização em tempo real sem sobrecarregar o sistema.
 
-        // Monitorar Pedidos
-        onValue(ref(db, 'orders'), (snapshot) => {
-            
+        // Monitorar Pedidos (Limitado aos últimos 50 para carregamento instantâneo)
+    const ordersQuery = query(ref(db, 'orders'), limitToLast(50));
+    
+    onValue(ordersQuery, (snapshot) => {
+        const pedidosDb = snapshot.val() || {};
+        
+        const ordersContainer = document.getElementById('orders-container');
+        const summaryBarEl = document.getElementById('summary-bar');
+        
+        const todayStr = new Date().toDateString();
+        
+        // Filtra apenas pedidos que NÃO estão prontos e são de hoje ANTES de processar o resto, economizando memória
+        const pendingOrders = Object.entries(pedidosDb)
+            .filter(([_, o]) => {
+                const isToday = new Date(o.timestamp).toDateString() === todayStr;
+                return isToday && o.status === 'pago_confirmado' && !o.kitchenReady;
+            })
+            .sort((a, b) => a[1].timestamp - b[1].timestamp);
 
-            const pedidosDb = snapshot.val() || {};
-            ordersCache = JSON.stringify(pedidosDb);
-            
-            const ordersContainer = document.getElementById('orders-container');
-            const summaryBarEl = document.getElementById('summary-bar');
-            
-            const todayStr = new Date().toDateString();
-            
-            // Filtra pedidos do dia
-            const allOrdersList = Object.entries(pedidosDb)
-                .filter(([_, ord]) => new Date(ord.timestamp).toDateString() === todayStr)
-                .sort((a, b) => a[1].timestamp - b[1].timestamp);
-
-            const pendingOrders = allOrdersList.filter(([_, o]) => o.status === 'pago_confirmado' && !o.kitchenReady);
+        // Lista completa apenas para numeração (opcional, mantendo apenas os ativos do dia)
+        const allOrdersList = pendingOrders;
 
             // Alerta Sonoro
             if (pendingOrders.length > lastCount) {
@@ -391,8 +384,7 @@
             } else {
                 ordersContainer.innerHTML = "";
                 pendingOrders.forEach(([key, o]) => {
-                    const orderIndex = allOrdersList.findIndex(([k, _]) => k === key) + 1;
-                    const orderNum = String(orderIndex).padStart(3, '0');
+                const orderNum = key.slice(-4).toUpperCase(); // Usa os últimos 4 dígitos do ID único para identificação rápida e leve
                     
                     const card = document.createElement('div');
                     card.className = 'order-card';
@@ -424,6 +416,12 @@
                                 <div class="order-extras" style="background: #fff5f5; border-left: 3px solid #ff4d4d; color: #ff4d4d;">
                                     <strong>OBSERVAÇÃO DO CLIENTE:</strong><br>
                                     <span style="font-size: 16px; font-weight: 800;">${o.observacao.toUpperCase()}</span>
+                                </div>
+                            ` : ''}
+                            ${o.managementObs ? `
+                                <div class="order-extras" style="background: #e0f2fe; border-left: 3px solid #0ea5e9; color: #0369a1; margin-top: 5px;">
+                                    <strong>OBSERVAÇÃO DA GERÊNCIA:</strong><br>
+                                    <span style="font-size: 16px; font-weight: 800;">${o.managementObs.toUpperCase()}</span>
                                 </div>
                             ` : ''}
                             ${o.extras && o.extras.length > 0 ? `
@@ -490,55 +488,113 @@
 
         
 
+        // --- DADOS PREDEFINIDOS COMPLETOS REDLINE (Otimização KDS) ---
+        const catalogData = [
+            { id: "p1", name: "Marmita Executiva Frango Parmegiana", weight: "Acompanha Batata frita, Macarrão, farofa de bacon, salada de maionese, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805317455_Marmita_Executiva_Frango_Parmegiana.png" },
+            { id: "p2", name: "Subline de Carne", weight: "Disco de carne Friboi fatiado, Pepino, Cebola, Tomate, Pepino, Alface, Repolho, Queijo, Molho especial", price: 16.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806259695_0000000000000000000000000000s.png" },
+            { id: "p3", name: "BIG Cheddar Cremoso", weight: "1 disco de carne Friboi tradicional, Cheddar, alface, cebola, tomate, pepino, calabresa, queijo, molho especial", price: 16.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805607723_0-00-0-ewew.png" },
+            { id: "p4", name: "Camarão Internacional", weight: "Risoto cremoso recheado com camarão, milho, ervilha, calabresa, arroz, batata palha, cheiro verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805413051_ewweew.png" },
+            { id: "p5", name: "BIG Salada X", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805562776_BIG_Salada_X.png" },
+            { id: "p6", name: "BIG Egg", weight: "1 disco de carne Friboi tradicional, ovo, alface, cebola, tomate, pepino, calabresa", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805580478_BIG_Egg.png" },
+            { id: "p7", name: "BIG Barbecue Cremoso", weight: "1 disco de carne Friboi tradicional, calabresa, alface, cebola, tomate, pepino, molho Barbecue", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805640792_===========na.png" },
+            { id: "p8", name: "BIG Hot Spice", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa, molho especial apimentado", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805658962_--------ma.png" },
+            { id: "p9", name: "BIG Caramelizado", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa, cebola caramelizada na manteiga", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805680805_-----zenis_(1).png" },
+            { id: "p10", name: "BIG Chicken", weight: "1 Frango Krispy, alface, cebola, tomate, pepino, Steak Perdigão", price: 18.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805700730_BIG_Chicken.png" },
+            { id: "p11", name: "BIG Holandês", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa, molho de carne moída e Requeijão", price: 19.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805730980_-----zenis_(2).png" },
+            { id: "p12", name: "BIG Bacon Mussarela", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa, molho tasty, Bacon, Queijo Mussarela", price: 19.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805744847_-----zenis_(3).png" },
+            { id: "p13", name: "BIG Cheddar Duplo", weight: "2 disco de carne Friboi tradicional, Cheddar, alface, cebola, tomate, pepino, calabresa", price: 23.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805783011_BIG_Cheddar_Duplo.png" },
+            { id: "p14", name: "BIG Bacon Triplo", weight: "3 disco de carne Friboi tradicional, Bacon, alface, cebola, tomate, pepino, calabresa, molho especial", price: 24.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805850515_download.png" },
+            { id: "p15", name: "BIG Tudo", weight: "2 disco de carne Friboi tradicional, Bacon, alface, cebola, tomate, pepino, calabresa, salsicha, cheddar, ovo, batata palha", price: 28.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805887048_BIG_Tudo.png" },
+            { id: "p16", name: "Subline de Frango", weight: "Steak de frango perdigão fatiado, Cebola, Tomate, Alface, Repolho, Queijo, Molho especial", price: 17.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806282305_dsds.png" },
+            { id: "p17", name: "Subline de Bacon Carne e Cheddar", weight: "Disco de carne Friboi fatiado, Cebola, Tomate, Alface, Pepino, Repolho, Queijo, Molho especial", price: 18.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806300866_0000000000000000000sub.png" },
+            { id: "p18", name: "Marmita Executiva Frango", weight: "Frango grelhado acompanha Batata frita, Macarrão, farofa de bacon, salada de maionese, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805336813_Marmita_Executiva_Frango.png" },
+            { id: "p19", name: "Marmita Executiva de Salmão empanado", weight: "Salmão empanado grelhado acompanha Batata frita, Macarrão, farofa de bacon, salada de maionese, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/------21.png" },
+            { id: "p20", name: "Marmita Executiva Carne", weight: "Carne grelhada acompanha Batata frita, Macarrão, farofa de bacon, salada de maionese, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805371216_Marmita_Executiva_Carne.png" },
+            { id: "p21", name: "Marmita Executiva Toscana", weight: "Toscana grelhada acompanha Batata frita, Macarrão, farofa de bacon, salada de maionese, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805467841_Marmita_Executiva_Toscana.png" },
+            { id: "p22", name: "Jantar Executivo Presidencial de Carne Acebolada", weight: "Carne grelhada, cebola caramelizada, Batata frita, Macarrão, farofa de bacon, salada de maionese, arroz branco de alho", price: 23.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805488131_------w_(2).png" },
+            { id: "p23", name: "Jantar Executivo Presidencial de Strogonoff", weight: "Strogonoff de frango, milho e ervilha, Batata palha, Macarrão, farofa de bacon, salada de maionese, arroz branco de alho", price: 24.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805509789_------w_(1).png" },
+            { id: "p24", name: "COMBO SUBLINE", weight: "2 SubLine um de carne e outro de frango com batata frita e molhos especiais", price: 63.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776804918411_-------w1.png" },
+            { id: "p25", name: "COMBO NETFLIX", weight: "2 Hamburguês de cheddar, Batata Frita, 2 Pizza Broto calabresa, Aneis Cebola Empanada, Queijo Cheddar, Bacon", price: 125.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776804937097_000000000000000000000000000000000000g.png" },
+            { id: "p26", name: "COMBO BIG LINE TRIPLO", weight: "3 Hamburguês de Cheddar, Batata Frita, Nuggets, Aneis Cebola Empanada, Queijo Cheddar, Bacon", price: 128.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776804959351_COMBO_BIG_LINE_TRIPLO.png" },
+            { id: "p27", name: "COMBO BIG DOG", weight: "2 Dog Cheddar, Batata Frita, Nuggets, Aneis Cebola Empanada, Queijo Cheddar, Bacon", price: 110.85, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805014022_COMBO_BIG_DOG.png" },
+            { id: "p28", name: "Batata Frita P", weight: "Porção de fritas Pequena para uma pessoa", price: 16.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805032005_Batata_Frita_G.png" },
+            { id: "p29", name: "Batata Frita M", weight: "Porção de fritas media para duas pessoas", price: 18.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805032005_Batata_Frita_G.png" },
+            { id: "p30", name: "Batata Frita G", weight: "Porção de fritas Grande para 3 pessoas", price: 23.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805032005_Batata_Frita_G.png" },
+            { id: "p31", name: "Batata de Marechal", weight: "Adiciona batata frita, calabresa, frango", price: 24.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/Gemini_Generated_Image_6lsz5b6lsz5b6lsz.png" },
+            { id: "p32", name: "Nugget Crocante Unidade", weight: "Unidade de Nuggets adicione quantas quiser", price: 2.99, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805081823_Nugget_Crocante_Unidade.png" },
+            { id: "p33", name: "Dog Padrão", weight: "Uma salsicha, Milho e ervilha, molho especial, carne moída, batata palha", price: 16.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805443692_eewdss.png" },
+            { id: "p34", name: "Dog Duplo", weight: "Duas salsichas, Milho e ervilha, molho especial, carne moída, batata palha", price: 17.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805263280_Dog_Duplo.png" },
+            { id: "p35", name: "Dog Bacon", weight: "Uma salsichas, bacon, Milho e ervilha, molho especial, carne moída, batata palha", price: 19.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805230483_Dog_Bacon.png" },
+            { id: "p36", name: "Dog Cheddar", weight: "Uma salsichas, Milho e ervilha, molho especial, carne moída, batata palha, queijo cheddar", price: 19.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805280900_Dog_Cheddar.png" },
+            { id: "p37", name: "Pizza Broto Portuguesa", weight: "Queijo, presunto, pimentão, azeitona, cebola, milho e ervilha, tomate, ovo cozido, oregano", price: 13.90, category: "Mini Pizzas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805101947_Pizza_Broto_Portuguesa.png" },
+            { id: "p38", name: "Pizza Broto Calabresa", weight: "Queijo Moçarella, orégano, calabresa", price: 8.90, category: "Mini Pizzas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805121624_Pizza_Broto_Calabresa.png" },
+            { id: "p39", name: "Pizza Broto Mussarela", weight: "Queijo, orégano", price: 8.90, category: "Mini Pizzas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805182109_Pizza_Broto_Mussarela.png" },
+            { id: "p40", name: "Pizza Broto Tres Queijos", weight: "Queijo, orégano, queijo Cheddar", price: 12.90, category: "Mini Pizzas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805182109_Pizza_Broto_Mussarela.png" },
+            { id: "p41", name: "Macarronada Carne moída", weight: "Molho especial, carne moída, milho, ervilha, batata palha, macarrão Penne", price: 19.90, category: "Macarronadas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806183506_eewwe.png" },
+            { id: "p42", name: "Macarronada Turbo", weight: "Molho especial, carne moída, milho, ervilha, batata palha, macarrão Penne, calabresa, bacon", price: 24.90, category: "Macarronadas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806203876_weew.png" },
+            { id: "p43", name: "Macarronada Cheddar Queijos", weight: "Molho especial, carne moída, milho, ervilha, batata palha, macarrão fetuchine, queijo Cheddar", price: 24.90, category: "Macarronadas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806222968_ewe.png" },
+            { id: "p44", name: "Coca-Cola Lata", weight: "220ml Refrigerante Coca-Cola Lata", price: 5.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805908258_Coca-Cola_Lata.png" },
+            { id: "p45", name: "Guaraná Lata", weight: "320ml Refrigerante Guaraná Lata", price: 6.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805921732_0000latagua.png" },
+            { id: "p46", name: "Guaraná 1L", weight: "1L Refrigerante Guaraná Litro", price: 12.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805945732_ew.png" },
+            { id: "p47", name: "Guaraná Jesus Lata", weight: "Refrigerante Guaraná Jesus Lata 260ml", price: 6.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805961184_0000jesu.png" },
+            { id: "p48", name: "Heineken Vidro", weight: "Heineken Vidro 250ML", price: 6.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805987750_ssdds.png" },
+            { id: "p49", name: "Coca-Cola 1L Tradicional", weight: "1 L Refrigerante Coca-Cola Litro", price: 13.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806012542_xc.png" },
+            { id: "p50", name: "Agua Mineral", weight: "Garrafa de agua de 500 ML Mineral", price: 3.90, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806034299_---001.png" }
+        ];
+
+        const catalogCategories = [
+            { name: "Hambúrguer", icon: "fa-solid fa-burger", order: 1 },
+            { name: "SubLine", icon: "fa-solid fa-burger", order: 2 },
+            { name: "Marmitas", icon: "fa-solid fa-drumstick-bite", order: 3 },
+            { name: "Lanches", icon: "fa-solid fa-shrimp", order: 4 },
+            { name: "Cachorro Quente", icon: "fa-solid fa-hotdog", order: 5 },
+            { name: "Mini Pizzas", icon: "fa-solid fa-pizza-slice", order: 6 },
+            { name: "Macarronadas", icon: "fa-solid fa-drumstick-bite", order: 7 },
+            { name: "Bebidas", icon: "fa-solid fa-beer-mug-empty", order: 8 }
+        ];
+
         window.toggleMenu = (show) => {
             const modal = document.getElementById('menu-modal');
             if(show) {
                 modal.style.display = 'flex';
                 const grid = document.getElementById('menu-items-grid');
-                grid.innerHTML = "Carregando...";
+                grid.innerHTML = "";
                 
-                Promise.all([get(ref(db, 'categories')), get(ref(db, 'products'))]).then(([catSnap, prodSnap]) => {
-                    const cats = catSnap.val() || {};
-                    const prods = prodSnap.val() || {};
-                    grid.innerHTML = "";
+                const sortedCats = [...catalogCategories].sort((a, b) => (a.order || 0) - (b.order || 0));
+                
+                sortedCats.forEach(cat => {
+                    const catProds = catalogData.filter(p => p.category === cat.name);
                     
-                    const sortedCats = Object.values(cats).sort((a, b) => (a.order || 0) - (b.order || 0));
-                    
-                    sortedCats.forEach(cat => {
-                        const catProds = Object.entries(prods).filter(([_, p]) => p.category === cat.name);
-                        
-                        if(catProds.length > 0) {
-                            const header = document.createElement('div');
-                            header.style.gridColumn = "1 / -1";
-                            header.style.textAlign = "left";
-                            header.style.padding = "10px 0";
-                            header.style.borderBottom = "1px solid var(--border)";
-                            header.style.marginTop = "15px";
-                            header.innerHTML = `<h3 style="color:var(--primary); text-transform: uppercase; font-size: 14px; letter-spacing: 1px;"><i class="${cat.icon || 'fa-solid fa-tag'}"></i> ${cat.name}</h3>`;
-                            grid.appendChild(header);
+                    if(catProds.length > 0) {
+                        const header = document.createElement('div');
+                        header.style.gridColumn = "1 / -1";
+                        header.style.textAlign = "left";
+                        header.style.padding = "10px 0";
+                        header.style.borderBottom = "1px solid var(--border)";
+                        header.style.marginTop = "15px";
+                        header.innerHTML = `<h3 style="color:var(--primary); text-transform: uppercase; font-size: 14px; letter-spacing: 1px;"><i class="${cat.icon || 'fa-solid fa-tag'}"></i> ${cat.name}</h3>`;
+                        grid.appendChild(header);
 
-                            catProds.forEach(([key, p]) => {
-                                const card = document.createElement('div');
-                                card.className = `menu-card`;
-                                card.style.cursor = 'pointer';
-                                card.style.position = 'relative';
-                                card.onclick = () => {
-                                    document.getElementById('detail-img').src = p.img || 'https://via.placeholder.com/200';
-                                    document.getElementById('detail-title').innerText = p.name;
-                                    document.getElementById('detail-desc').innerText = p.weight || 'Nenhuma descrição disponível.';
-                                    document.getElementById('product-detail-modal').style.display = 'flex';
-                                };
-                                card.innerHTML = `
-                                    <img src="${p.img || 'https://via.placeholder.com/200'}" onerror="this.src='https://via.placeholder.com/200'">
-                                    <div style="padding:10px">
-                                        <strong style="display:block; color:var(--primary)">${p.name}</strong>
-                                        <p style="font-size:11px; margin-top:5px; color:#cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:10px;">${p.weight || ''}</p>
-                                    </div>
-                                `;
-                                grid.appendChild(card);
-                            });
-                        }
-                    });
+                        catProds.forEach((p) => {
+                            const card = document.createElement('div');
+                            card.className = `menu-card`;
+                            card.style.cursor = 'pointer';
+                            card.onclick = () => {
+                                document.getElementById('detail-img').src = p.img;
+                                document.getElementById('detail-title').innerText = p.name;
+                                document.getElementById('detail-desc').innerText = p.weight;
+                                document.getElementById('product-detail-modal').style.display = 'flex';
+                            };
+                            card.innerHTML = `
+                                <img src="${p.img}">
+                                <div style="padding:10px">
+                                    <strong style="display:block; color:var(--primary)">${p.name}</strong>
+                                    <p style="font-size:11px; margin-top:5px; color:#64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.weight}</p>
+                                </div>
+                            `;
+                            grid.appendChild(card);
+                        });
+                    }
                 });
             } else {
                 modal.style.display = 'none';
@@ -546,6 +602,7 @@
         };
 
         let shoppingList = [];
+    let showCompleted = false;
 
         onValue(ref(db, 'shoppingList'), (snapshot) => {
             shoppingList = snapshot.val() || [];
@@ -587,27 +644,89 @@
             }
         };
 
-        function renderShoppingList() {
-            const container = document.getElementById('shopping-items-container');
-            container.innerHTML = shoppingList.length === 0 ? '<p style="color:var(--text-dim); text-align:center;">Lista vazia</p>' : '';
-            shoppingList.forEach(item => {
-                const row = document.createElement('div');
-                row.style.display = 'flex';
-                row.style.alignItems = 'center';
-                row.style.gap = '10px';
-                row.style.padding = '10px';
-                row.style.background = '#f8fafc';
-                row.style.borderRadius = '8px';
-                row.style.border = '1px solid var(--border)';
-                row.innerHTML = `
-                    <input type="checkbox" ${item.checked ? 'checked' : ''} onclick="toggleShopCheck(${item.id})" style="width:18px; height:18px; cursor:pointer;">
-                    <span style="flex:1; font-weight:600; ${item.checked ? 'text-decoration:line-through; color:var(--text-dim);' : ''}">${item.name}</span>
-                    <span style="color:var(--primary); font-weight:800; margin-right: 5px;">${item.qty}</span>
-                    <i class="fa-solid fa-trash" style="color: #ef4444; cursor: pointer; font-size: 14px;" onclick="removeShoppingItem(${item.id})"></i>
-                `;
-                container.appendChild(row);
-            });
+        window.toggleCompletedList = () => {
+        showCompleted = !showCompleted;
+        renderShoppingList();
+    };
+
+    function renderShoppingList() {
+        const container = document.getElementById('shopping-items-container');
+        container.innerHTML = "";
+        
+        const activeItems = shoppingList.filter(item => !item.checked);
+        const completedItems = shoppingList.filter(item => item.checked);
+
+        if (activeItems.length === 0 && completedItems.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-dim); text-align:center;">Lista vazia</p>';
+            return;
         }
+
+        activeItems.forEach(item => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+            row.style.gap = '10px';
+            row.style.padding = '10px';
+            row.style.background = '#f8fafc';
+            row.style.borderRadius = '8px';
+            row.style.border = '1px solid var(--border)';
+            row.innerHTML = `
+                <input type="checkbox" onclick="toggleShopCheck(${item.id})" style="width:18px; height:18px; cursor:pointer;">
+                <span style="flex:1; font-weight:600;">${item.name}</span>
+                <span style="color:var(--primary); font-weight:800; margin-right: 5px;">${item.qty}</span>
+                <i class="fa-solid fa-trash" style="color: #ef4444; cursor: pointer; font-size: 14px;" onclick="removeShoppingItem(${item.id})"></i>
+            `;
+            container.appendChild(row);
+        });
+
+        if (completedItems.length > 0) {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.style.width = "100%";
+            toggleBtn.style.padding = "10px";
+            toggleBtn.style.marginTop = "10px";
+            toggleBtn.style.background = "#f1f5f9";
+            toggleBtn.style.border = "none";
+            toggleBtn.style.borderRadius = "8px";
+            toggleBtn.style.cursor = "pointer";
+            toggleBtn.style.color = "var(--text-dim)";
+            toggleBtn.style.fontWeight = "bold";
+            toggleBtn.style.fontSize = "12px";
+            toggleBtn.style.display = "flex";
+            toggleBtn.style.justifyContent = "space-between";
+            toggleBtn.style.alignItems = "center";
+            toggleBtn.innerHTML = `<span><i class="fa-solid fa-check-double"></i> CONCLUÍDOS (${completedItems.length})</span> <i class="fa-solid ${showCompleted ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>`;
+            toggleBtn.onclick = () => window.toggleCompletedList();
+            container.appendChild(toggleBtn);
+
+            if (showCompleted) {
+                const completedContainer = document.createElement('div');
+                completedContainer.style.display = 'flex';
+                completedContainer.style.flexDirection = 'column';
+                completedContainer.style.gap = '8px';
+                completedContainer.style.marginTop = '10px';
+
+                completedItems.forEach(item => {
+                    const row = document.createElement('div');
+                    row.style.display = 'flex';
+                    row.style.alignItems = 'center';
+                    row.style.gap = '10px';
+                    row.style.padding = '10px';
+                    row.style.background = '#f8fafc';
+                    row.style.borderRadius = '8px';
+                    row.style.border = '1px solid var(--border)';
+                    row.style.opacity = '0.6';
+                    row.innerHTML = `
+                        <input type="checkbox" checked onclick="toggleShopCheck(${item.id})" style="width:18px; height:18px; cursor:pointer;">
+                        <span style="flex:1; font-weight:600; text-decoration:line-through; color:var(--text-dim);">${item.name}</span>
+                        <span style="color:var(--primary); font-weight:800; margin-right: 5px;">${item.qty}</span>
+                        <i class="fa-solid fa-trash" style="color: #ef4444; cursor: pointer; font-size: 14px;" onclick="removeShoppingItem(${item.id})"></i>
+                    `;
+                    completedContainer.appendChild(row);
+                });
+                container.appendChild(completedContainer);
+            }
+        }
+    }
 
         window.removeShoppingItem = (id) => {
             const newList = shoppingList.filter(item => item.id !== id);
