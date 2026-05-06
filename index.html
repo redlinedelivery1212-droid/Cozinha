@@ -9,7 +9,7 @@
         :root {
             --bg-body: #f1f5f9;
             --bg-card: #ffffff;
-            --primary: #f46b21;
+            --primary: #ef4444;
             --secondary: #22c55e;
             --warning: #f59e0b;
             --text-main: #334155;
@@ -84,7 +84,7 @@
             position: relative;
             transition: transform 0.2s;
             animation: fadeIn 0.3s ease;
-            box-shadow: 0 4px 15px rgba(244, 107, 33, 0.15);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
@@ -642,7 +642,7 @@
         };
 
         window.clearShoppingList = () => {
-            if(confirm("Deseja apagar todos os itens da lista?")) {
+            if(confirm("TEM CERTEZA QUE QUER LIMPAR A LISTA?\n\n⚠️ ATENÇÃO ATENÇÃO! ⚠️\n\nEssa ação apagará todos os itens permanentemente.")) {
                 set(ref(db, 'shoppingList'), null);
             }
         };
