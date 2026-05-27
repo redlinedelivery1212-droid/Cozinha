@@ -408,6 +408,7 @@
                                     <div style="flex:1">
                                         <span class="item-name" style="${i.ready ? 'text-decoration: line-through' : ''}">${i.name}</span>
                                         ${i.drink ? `<span class="item-obs"><i class="fa-solid fa-wine-glass"></i> ${i.drink}</span>` : ''}
+                                        ${i.meatPoint ? `<span style="display:block; margin-top:5px; background:#ef4444; color:white; padding:6px 12px; border-radius:8px; font-weight:900; font-size:15px; width:fit-content; border: 2px solid #000; box-shadow: 0 4px 0 #000; animation: blink 1s infinite;">🥩 PONTO: ${i.meatPoint.toUpperCase()}</span>` : ''}
                                         ${isSubline ? `<button onclick='expandSubline(${JSON.stringify(i)})' style="margin-top:5px; background:var(--primary); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">EXPANDIR</button>` : ''}
                                     </div>
                                 </div>
