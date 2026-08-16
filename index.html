@@ -2,704 +2,374 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RedLine | KDS Profissional</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RedLine Mobile - Gestão</title>
+    <link rel="icon" type="image/png" href="https://cxpdwntsjvyvyglkwgbj.supabase.co/storage/v1/object/public/pics/xccxccvvv.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --bg-body: #f1f5f9;
-            --bg-card: #ffffff;
-            --primary: #ef4444;
-            --secondary: #22c55e;
-            --warning: #f59e0b;
-            --text-main: #334155;
-            --text-dim: #64748b;
-            --border: #e2e8f0;
+            --primary: #ea1d2c;
+            --bg: #f7f7f7;
+            --white: #ffffff;
+            --text: #3e3e3e;
+            --gray: #717171;
+            --green: #2ecc71;
+            --orange: #f39c12;
+            --blue: #3498db;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-        body { 
-            background-color: var(--bg-body); 
-            color: var(--text-main); 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden;
-        }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; overflow-x: hidden; }
 
-        /* HEADER & SUMMARY */
+        /* Header Fixed */
         header {
-            background: var(--primary);
-            color: white;
-            padding: 15px 25px;
+            background: var(--white);
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        header h1, header p { color: white !important; }
+        header h1 { font-size: 18px; color: var(--primary); font-weight: 900; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-open { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .status-closed { background: var(--primary); }
 
-        .summary-bar {
-            background: #ffffff;
-            padding: 10px 20px;
+        /* Bottom Nav */
+        nav.bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--white);
             display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            border-bottom: 3px solid var(--primary);
-            white-space: nowrap;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #eee;
+            z-index: 1000;
         }
-
-        .summary-item {
-            background: #f8fafc;
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 700;
-            border: 1px solid var(--border);
-            color: var(--text-main);
-        }
-
-        .summary-item span { color: var(--primary); margin-right: 5px; }
-
-        /* GRID DE PEDIDOS */
-        .container {
-            flex: 1;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-            overflow-y: auto;
-            align-content: start;
-        }
-
-        /* CARD DE PEDIDO */
-        .order-card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 2px solid var(--primary);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            transition: transform 0.2s;
-            animation: fadeIn 0.3s ease;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
-
-        .order-header {
-            padding: 15px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fcfcfc;
-            border-radius: 12px 12px 0 0;
-        }
-
-        .order-id { font-size: 20px; font-weight: 900; color: var(--primary); }
-        .order-client { font-size: 14px; font-weight: 600; color: #1e293b; text-transform: uppercase; }
-
-        .timer-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .items-area {
-            padding: 15px;
+        .nav-item {
+            text-align: center;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 11px;
             flex: 1;
         }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
 
-        .item-row {
+        /* Sections */
+        .section { display: none; padding: 15px; animation: fadeIn 0.3s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Order Status Tabs */
+        .status-tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            overflow-x: auto;
+            padding-bottom: 15px;
+            scrollbar-width: none;
         }
-
-        .item-qty {
-            color: var(--primary);
-            font-weight: 900;
-            font-size: 18px;
-            min-width: 25px;
-        }
-
-        .item-name { font-size: 16px; font-weight: 500; }
-        .item-obs { color: var(--secondary); font-size: 13px; font-weight: 600; display: block; margin-top: 2px; }
-
-        .order-extras {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(245, 158, 11, 0.1);
-            border-left: 3px solid var(--warning);
-            border-radius: 4px;
+        .status-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            padding: 8px 20px;
+            background: var(--white);
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
             font-size: 13px;
+            font-weight: 600;
+            color: var(--gray);
         }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .btn-finish {
-            width: 100%;
-            padding: 18px;
-            border: none;
-            background: var(--secondary);
-            color: white;
-            font-weight: 900;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 0 0 11px 11px;
-            text-transform: uppercase;
-            transition: 0.2s;
+        /* Order Card */
+        .order-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 5px solid #ccc;
         }
+        .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .client-info { display: flex; align-items: center; gap: 10px; }
+        .client-info img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .client-name { font-weight: bold; font-size: 14px; }
+        .order-id { font-size: 11px; color: var(--gray); }
+        .timer { font-size: 12px; font-weight: bold; background: #eee; padding: 2px 6px; border-radius: 4px; }
 
-        .btn-finish:active { filter: brightness(1.2); }
+        .items-list { font-size: 13px; color: #555; margin: 10px 0; line-height: 1.4; border-top: 1px dashed #eee; border-bottom: 1px dashed #eee; padding: 10px 0; }
+        .order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .order-total { font-weight: 900; color: var(--primary); font-size: 16px; }
 
-        /* MODAIS */
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            justify-content: center;
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .btn { border: none; border-radius: 8px; padding: 10px; font-weight: bold; font-size: 13px; cursor: pointer; text-align: center; }
+        .btn-next { background: var(--primary); color: white; }
+        .btn-wa { background: #25d366; color: white; }
+        .btn-outline { background: #f0f0f0; color: var(--text); }
+
+    /* Modal Comunicação Mobile */
+    .modal-comm {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+    .modal-comm-content {
+        background: white;
+        width: 90%;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+    }
+    .comm-btn-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+    .btn-comm {
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+        /* Settings Style */
+        .settings-group { background: var(--white); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
+            padding: 15px;
+            border-bottom: 1px solid #f5f5f5;
         }
+        .setting-info strong { display: block; font-size: 14px; }
+        .setting-info span { font-size: 12px; color: var(--gray); }
 
-        .modal {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--green); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Quick Stats Card */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: var(--white); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stat-card small { font-size: 10px; color: var(--gray); text-transform: uppercase; }
+        .stat-card div { font-size: 18px; font-weight: 900; color: var(--primary); margin-top: 5px; }
+
+        /* Floating Notification Sound */
+        #notif-banner {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--green);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: bold;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-
-        .modal h2 { color: var(--text-main); }
-        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        .btn-cancel { background: #e2e8f0; color: #475569; }
-        .btn-confirm { background: var(--primary); color: white; }
-
-        /* MENU GRID */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 15px;
-            padding: 20px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .menu-card { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .menu-card img { width: 100%; height: 120px; object-fit: cover; }
-
-        /* STATUS COLORS */
-        .time-green { background: #10b981; color: white; }
-        .time-yellow { background: #f59e0b; color: black; }
-        .time-red { background: #ef4444; color: white; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.6; } }
-
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-body); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-        
-
-        
     </style>
 </head>
 <body>
 
-    
-
     <header>
-        <div>
-            <h1 style="letter-spacing: -1px;">REDLINE <span style="color:var(--primary)">KDS</span></h1>
-            <p id="stats-text" style="color: var(--text-dim); font-size: 13px;">Carregando pedidos...</p>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn-cancel" style="padding: 10px 15px; border-radius: 8px; background: #f59e0b; color: white;" onclick="togglePendingModal(true)">
-                <i class="fa-solid fa-clock-rotate-left"></i> PENDENTES
-            </button>
-            <button class="btn-cancel" style="padding: 10px 15px; border-radius: 8px;" onclick="toggleMenu(true)">
-                <i class="fa-solid fa-book-open"></i> CARDÁPIO
-            </button>
-            <button class="btn-cancel" style="padding: 10px 15px; border-radius: 8px; background: #334155; color: white;" onclick="toggleShoppingList(true)">
-                <i class="fa-solid fa-list-check"></i> LISTA
-            </button>
+        <h1>REDLINE <small style="font-weight: normal; color: #999;">MOBILE</small></h1>
+        <div id="store-badge-status">
+            <span class="status-dot status-closed"></span>
+            <span style="font-size: 12px; font-weight: bold;">FECHADA</span>
         </div>
     </header>
 
-    <div class="summary-bar" id="summary-bar">
-        <!-- Gerado dinamicamente -->
-    </div>
+    <div id="notif-banner"><i class="fa-solid fa-bell"></i> NOVO PEDIDO RECEBIDO!</div>
 
-    <div class="container" id="orders-container">
-        <!-- Pedidos entram aqui -->
-    </div>
-
-    <!-- Modal Confirmação -->
-    <div id="confirm-modal" class="overlay">
-        <div class="modal">
-            <h2 id="modal-title">FINALIZAR PEDIDO?</h2>
-            <p id="modal-desc" style="margin-top: 10px; color: var(--text-dim);">O pedido será movido para a tela de entrega.</p>
-            <div class="modal-btns">
-                <button class="btn btn-cancel" onclick="closeModal()">VOLTAR</button>
-                <button class="btn btn-confirm" id="confirm-ready-btn">CONFIRMAR</button>
+    <!-- SEÇÃO PEDIDOS -->
+    <section id="sec-orders" class="section active">
+        <div class="stats-grid">
+            <div class="stat-card" style="grid-column: span 2;">
+                <small>Pedidos Pendentes Agora</small>
+                <div id="stat-pending-count">0</div>
             </div>
         </div>
-    </div>
 
-    <!-- Modal Menu -->
-    <div id="menu-modal" class="overlay">
-        <div class="modal" style="max-width: 900px; position: relative;">
-            <button onclick="toggleMenu(false)" style="position: absolute; top: 15px; right: 20px; background: none; border: none; color: var(--text-main); font-size: 32px; cursor: pointer; font-weight: bold; line-height: 1;">&times;</button>
-            <div style="text-align: left; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;">
-                <h2 style="color: var(--text-main); font-size: 22px;">CONSULTA DE PRODUTOS</h2>
-            </div>
-            <div class="menu-grid" id="menu-items-grid"></div>
-        </div>
-    </div>
+        
 
-    <!-- Modal Detalhes do Produto -->
-    <div id="product-detail-modal" class="overlay" style="z-index: 1100;">
-        <div class="modal">
-            <img id="detail-img" src="" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;">
-            <h2 id="detail-title" style="color: var(--primary);"></h2>
-            <p id="detail-desc" style="margin-top: 15px; color: var(--text-dim); line-height: 1.5; text-align: left;"></p>
-            <div class="modal-btns">
-                <button class="btn btn-cancel" onclick="document.getElementById('product-detail-modal').style.display='none'">FECHAR</button>
+        <div class="status-tabs">
+            <button class="tab-btn active" onclick="filterStatus('pago_confirmado', this)">Cozinha <span id="count-cozinha">0</span></button>
+        </div>
+
+        <div id="orders-container">
+            <!-- Pedidos renderizados aqui -->
+            <p style="text-align: center; color: #999; margin-top: 50px;">Carregando pedidos...</p>
+        </div>
+    </section>
+
+    <!-- SEÇÃO LISTA DE COMPRAS -->
+    <section id="sec-list" class="section">
+        <h2 style="font-size: 16px; margin-bottom: 15px;">Lista de Compras</h2>
+        
+        <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="text" id="shop-item-name" placeholder="Item..." style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                <input type="text" id="shop-item-qty" placeholder="Qtd" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+            </div>
+            <button class="btn btn-next" style="width: 100%;" onclick="addShoppingItem()">
+                <i class="fa-solid fa-plus"></i> ADICIONAR NA LISTA
+            </button>
+        </div>
+
+        <div id="shopping-items-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <!-- Itens da lista aqui -->
+        </div>
+
+        <button onclick="clearShoppingList()" class="btn" style="width: 100%; background: #ff4d4d; color: white;">
+            <i class="fa-solid fa-trash-can"></i> LIMPAR LISTA COMPLETA
+        </button>
+    </section>
+
+    <!-- SEÇÃO CONFIGURAÇÕES -->
+    <section id="sec-config" class="section">
+        <h2 style="font-size: 16px; margin-bottom: 15px;">Controle da Loja</h2>
+        
+        <div class="settings-group">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>Forçar Fechado</strong>
+                    <span>Aparece fechado no app</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-closed" onchange="updateConfig('closedToday', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>Forçar Aberto</strong>
+                    <span>Ignora horário padrão</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-open" onchange="updateConfig('forcedOpen', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>Demanda Alta</strong>
+                    <span>Avisa prazo maior (40-60min)</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-demand" onchange="updateGlobal('high_demand', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>Apenas Retirada</strong>
+                    <span>Desativa frete no app</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-pickup" onchange="updateConfig('onlyPickup', this.checked)">
+                    <span class="slider"></span>
+                </label>
             </div>
         </div>
-    </div>
+
+        <h2 style="font-size: 16px; margin-bottom: 15px;">Promoções Rápidas</h2>
+        <div class="settings-group">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>Brinde Ouro Branco</strong>
+                    <span>Ativa no carrinho</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-brinde" onchange="updateGlobal('brinde_ativo', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <button onclick="window.location.reload()" class="btn" style="width: 100%; background: #ddd; color: #666;">
+            <i class="fa-solid fa-rotate"></i> Atualizar Painel
+        </button>
+    </section>
+
+    <!-- Navigation -->
+    <nav class="bottom-nav">
+        <a href="javascript:void(0)" class="nav-item active" onclick="showSec('sec-orders', this)">
+            <i class="fa-solid fa-receipt"></i> Pedidos
+        </a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showSec('sec-list', this)">
+            <i class="fa-solid fa-list-check"></i> Lista
+        </a>
+    </nav>
+
+    <audio id="sound-new" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
     <!-- Modal SubLine Expandido -->
-    <div id="subline-modal" class="overlay" style="z-index: 1200;">
-        <div class="modal" style="max-width: 400px;">
-            <h2 id="subline-modal-title" style="color: var(--primary); font-size: 18px; margin-bottom: 15px;"></h2>
-            <div id="subline-ingredients-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 450px; overflow-y: auto; padding: 10px;"></div>
-            <button class="btn btn-cancel" style="width: 100%; margin-top: 20px;" onclick="document.getElementById('subline-modal').style.display='none'">FECHAR</button>
+    <div id="subline-modal" class="modal-comm" onclick="if(event.target == this) this.style.display='none'">
+        <div class="modal-comm-content" style="max-width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h3 id="subline-modal-title" style="font-size: 16px; margin-bottom: 15px; color: var(--primary);"></h3>
+            <div id="subline-ingredients-list" style="display: flex; flex-direction: column; gap: 10px; text-align: left;"></div>
+            <button class="btn" style="background: #eee; color: #333; margin-top: 20px; width: 100%;" onclick="document.getElementById('subline-modal').style.display='none'">Fechar</button>
         </div>
     </div>
 
-    <div id="shopping-list-modal" class="overlay" style="z-index: 1300;">
-        <div class="modal" style="max-width: 500px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;">
-                <h2 style="font-size: 20px;">LISTA DE COMPRAS</h2>
-                <button onclick="toggleShoppingList(false)" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="shop-item-name" placeholder="Item..." style="flex: 2; padding: 10px; border: 1px solid var(--border); border-radius: 5px;">
-                    <input type="text" id="shop-item-qty" placeholder="Qtd" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 5px;">
-                </div>
-                <button class="btn-confirm" style="width: 100%; padding: 12px; border-radius: 5px; border: none; cursor: pointer;" onclick="addShoppingItem()">
-                    <i class="fa-solid fa-plus"></i> ADICIONAR ITEM
-                </button>
-            </div>
-            <div id="shopping-items-container" style="max-height: 350px; overflow-y: auto; text-align: left; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;"></div>
-            <div class="modal-btns">
-                <button class="btn btn-cancel" onclick="toggleShoppingList(false)">FECHAR</button>
-                <button class="btn btn-confirm" style="background: #ef4444;" onclick="clearShoppingList()">LIMPAR TUDO</button>
-            </div>
+<!-- Modal de Comunicação Mobile -->
+<div id="modal-comm" class="modal-comm" onclick="if(event.target == this) this.style.display='none'">
+    <div class="modal-comm-content">
+        <h3 style="font-size: 16px; margin-bottom: 5px;">Comunicação</h3>
+        <p id="comm-client-name" style="font-size: 12px; color: #666; margin-bottom: 15px;"></p>
+        <div class="comm-btn-list">
+            <button class="btn-comm" style="background: #2ecc71;" id="m-btn-confirm"><i class="fa-solid fa-check"></i> Confirmar Pedido</button>
+            <button class="btn-comm" style="background: #00b894;" id="m-btn-pix"><i class="fa-solid fa-qrcode"></i> Cobrança PIX</button>
+            <button class="btn-comm" style="background: #f39c12;" id="m-btn-delay"><i class="fa-solid fa-clock"></i> Aviso de Atraso</button>
+            <button class="btn-comm" style="background: #3498db;" id="m-btn-track"><i class="fa-solid fa-location-dot"></i> Link de Rastreio</button>
+            <button class="btn" style="background: #eee; color: #333; margin-top: 10px;" onclick="document.getElementById('modal-comm').style.display='none'">Fechar</button>
         </div>
     </div>
-
-    <!-- Modal Pedidos Pendentes -->
-    <div id="pending-modal" class="overlay" style="z-index: 1400;">
-        <div class="modal" style="max-width: 800px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--warning); padding-bottom: 10px;">
-                <h2 style="font-size: 20px;">PEDIDOS PENDENTES (AGUARDANDO APROVAÇÃO)</h2>
-                <button onclick="togglePendingModal(false)" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
-            </div>
-            <div id="pending-orders-list" style="max-height: 500px; overflow-y: auto; text-align: left; display: flex; flex-direction: column; gap: 12px;"></div>
-            <div class="modal-btns">
-                <button class="btn btn-cancel" onclick="togglePendingModal(false)">FECHAR</button>
-            </div>
-        </div>
-    </div>
-
-    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, get, query, limitToLast } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, update, get, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
         const firebaseConfig = {
-        apiKey: "AIzaSyCYfG0soItKe0_lKbNxHMxEmRjnabqx0WE",
-        authDomain: "newredline-e7cdb.firebaseapp.com",
-        databaseURL: "https://newredline-e7cdb-default-rtdb.firebaseio.com",
-        projectId: "newredline-e7cdb",
-        storageBucket: "newredline-e7cdb.firebasestorage.app",
-        messagingSenderId: "301627101780",
-        appId: "1:301627101780:web:56232ef4aafdb60cb0d3c1"
-    };
+            apiKey: "AIzaSyCYfG0soItKe0_lKbNxHMxEmRjnabqx0WE",
+            authDomain: "newredline-e7cdb.firebaseapp.com",
+            databaseURL: "https://newredline-e7cdb-default-rtdb.firebaseio.com",
+            projectId: "newredline-e7cdb",
+            storageBucket: "newredline-e7cdb.firebasestorage.app",
+            messagingSenderId: "301627101780",
+            appId: "1:301627101780:web:56232ef4aafdb60cb0d3c1"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        let lastCount = 0;
-        let currentOrderKey = null;
-        let ordersCache = "";
-        let allOrdersData = {};
-
-        // Verificador removido para ganho de performance - O onValue já garante a atualização em tempo real sem sobrecarregar o sistema.
-
-        // Monitorar Pedidos (Limitado aos últimos 50 para carregamento instantâneo)
-    const ordersQuery = query(ref(db, 'orders'), limitToLast(50));
-    
-    onValue(ordersQuery, (snapshot) => {
-        const pedidosDb = snapshot.val() || {};
-        allOrdersData = pedidosDb;
-        
-        const ordersContainer = document.getElementById('orders-container');
-        const summaryBarEl = document.getElementById('summary-bar');
-        
-        const todayStr = new Date().toDateString();
-        
-        // Filtra apenas pedidos que NÃO estão prontos e são de hoje ANTES de processar o resto, economizando memória
-        const pendingOrders = Object.entries(pedidosDb)
-            .filter(([_, o]) => {
-                const isToday = new Date(o.timestamp).toDateString() === todayStr;
-                return isToday && o.status === 'pago_confirmado' && !o.kitchenReady;
-            })
-            .sort((a, b) => a[1].timestamp - b[1].timestamp);
-
-        // Lista completa apenas para numeração (opcional, mantendo apenas os ativos do dia)
-        const allOrdersList = pendingOrders;
-
-            // Alerta Sonoro
-            if (pendingOrders.length > lastCount) {
-                document.getElementById('notif-sound').play().catch(() => {});
-            }
-            lastCount = pendingOrders.length;
-
-            document.getElementById('stats-text').innerText = `${pendingOrders.length} PEDIDOS EM PREPARO AGORA`;
-
-            // Renderizar Resumo de Itens
-            const itemTotalsMap = {};
-            pendingOrders.forEach(([_, o]) => {
-                if(o.items) {
-                    o.items.forEach(i => {
-                        itemTotalsMap[i.name] = (itemTotalsMap[i.name] || 0) + i.qty;
-                    });
-                }
-            });
-
-            summaryBarEl.innerHTML = Object.entries(itemTotalsMap).map(([name, qty]) => `
-                <div class="summary-item"><span>${qty}x</span> ${name}</div>
-            `).join('') || '<div style="color:var(--text-dim); font-size:12px;">Nenhum item pendente para produção em lote.</div>';
-
-            // Renderizar Cards
-            if (pendingOrders.length === 0) {
-                ordersContainer.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--text-dim);">
-                    <i class="fa-solid fa-mug-hot" style="font-size: 50px; margin-bottom: 15px;"></i>
-                    <h2>Tudo em dia! Nenhuma comanda na fila.</h2>
-                </div>`;
-            } else {
-                ordersContainer.innerHTML = "";
-                pendingOrders.forEach(([key, o]) => {
-                const orderNum = key.slice(-4).toUpperCase(); // Usa os últimos 4 dígitos do ID único para identificação rápida e leve
-                    
-                    const card = document.createElement('div');
-                    card.className = 'order-card';
-                    card.innerHTML = `
-                        <div class="order-header">
-                            <div>
-                                <span class="order-client">${o.cliente ? o.cliente.nome : 'Cliente'}</span><br>
-                                <span class="order-id">#${orderNum}</span>
-                            </div>
-                            <span class="timer-badge time-green" data-start="${o.timestamp}">00:00</span>
-                        </div>
-                        <div class="items-area">
-                            ${o.items ? o.items.map((i, index) => {
-                                const isSubline = i.name.toLowerCase().includes("subline montado");
-                                return `
-                                <div class="item-row" style="align-items: center; ${i.ready ? 'opacity: 0.5' : ''}">
-                                    <input type="checkbox" ${i.ready ? 'checked' : ''} 
-                                        style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--secondary);" 
-                                        onclick="toggleItemReady('${key}', ${index}, ${i.ready || false})">
-                                    <span class="item-qty" style="margin-left: 10px;">${i.qty}</span>
-                                    <div style="flex:1">
-                                        <span class="item-name" style="${i.ready ? 'text-decoration: line-through' : ''}">${i.name}</span>
-                                        ${i.drink ? `<span class="item-obs"><i class="fa-solid fa-wine-glass"></i> ${i.drink}</span>` : ''}
-                                        ${i.meatPoint ? `<span style="display:block; margin-top:5px; background:#ef4444; color:white; padding:6px 12px; border-radius:8px; font-weight:900; font-size:15px; width:fit-content; border: 2px solid #000; box-shadow: 0 4px 0 #000; animation: blink 1s infinite;">🥩 PONTO: ${i.meatPoint.toUpperCase()}</span>` : ''}
-                                        ${isSubline ? `<button onclick='expandSubline(${JSON.stringify(i)})' style="margin-top:5px; background:var(--primary); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">EXPANDIR</button>` : ''}
-                                    </div>
-                                </div>
-                            `}).join('') : ''}
-                            ${o.observacao ? `
-                                <div class="order-extras" style="background: #fff5f5; border-left: 3px solid #ff4d4d; color: #ff4d4d;">
-                                    <strong>OBSERVAÇÃO DO CLIENTE:</strong><br>
-                                    <span style="font-size: 16px; font-weight: 800;">${o.observacao.toUpperCase()}</span>
-                                </div>
-                            ` : ''}
-                            ${o.managementObs ? `
-                                <div class="order-extras" style="background: #e0f2fe; border-left: 3px solid #0ea5e9; color: #0369a1; margin-top: 5px;">
-                                    <strong>OBSERVAÇÃO DA GERÊNCIA:</strong><br>
-                                    <span style="font-size: 16px; font-weight: 800;">${o.managementObs.toUpperCase()}</span>
-                                </div>
-                            ` : ''}
-                            ${o.extras && o.extras.length > 0 ? `
-                                <div class="order-extras">
-                                    <strong>ADICIONAIS GRATUITOS:</strong><br>
-                                    ${o.extras.join(', ')}
-                                </div>
-                            ` : ''}
-                        </div>
-                        <button class="btn-finish" onclick="openFinishModal('${key}')">Concluir Pedido</button>
-                    `;
-                    ordersContainer.appendChild(card);
-                });
-            }
-
-            
-        });
-
-        // Funções Globais
-        window.openFinishModal = (key) => {
-            currentOrderKey = key;
-            document.getElementById('confirm-modal').style.display = 'flex';
-        };
-
-        window.closeModal = () => {
-            document.getElementById('confirm-modal').style.display = 'none';
-        };
-
-        document.getElementById('confirm-ready-btn').onclick = () => {
-            if (currentOrderKey) {
-                set(ref(db, `orders/${currentOrderKey}/kitchenReady`), true);
-                closeModal();
-            }
-        };
-
-        window.toggleItemReady = (orderKey, itemIndex, currentStatus) => {
-            set(ref(db, `orders/${orderKey}/items/${itemIndex}/ready`), !currentStatus);
-        };
-
-        window.expandSubline = (item) => {
-            const modal = document.getElementById('subline-modal');
-            const title = document.getElementById('subline-modal-title');
-            const list = document.getElementById('subline-ingredients-list');
-            
-            title.innerText = item.name;
-            list.innerHTML = "";
-            
-            if(item.ingredients && item.ingredients.length > 0) {
-                item.ingredients.forEach(ing => {
-                    list.innerHTML += `
-                        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; text-align: left;">
-                            <input type="checkbox" style="width: 22px; height: 22px; cursor: pointer; accent-color: var(--secondary);">
-                            <img src="${ing.img}" style="width: 50px; height: 50px; object-fit: contain; border-radius: 5px;">
-                            <span style="font-weight: bold; font-size: 14px; color: var(--text-main);">${ing.name}</span>
-                        </div>
-                    `;
-                });
-            } else {
-                list.innerHTML = "<p style='color:var(--text-dim)'>Detalhes dos ingredientes não disponíveis para este pedido.</p>";
-            }
-            
-            modal.style.display = 'flex';
-        };
-
-        
-
-        // --- DADOS PREDEFINIDOS COMPLETOS REDLINE (Otimização KDS) ---
-        const catalogData = [
-        { id: "c_valentines", name: "Combo Valentines", weight: "O par perfeito: 2 Big Cheddar suculentos, 1 porção de Batata Frita crocante e 1 refrigerante de 1 litro geladinho.", price: 44.90, category: "Combos", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/xxxxxxxxxxxxxxxxxxxxxxxxxxcccc.png" },
-        { id: "k1", name: "Combo Kids Brinquedo Bolhas", weight: "Hamburguer, batata p e brinquedo", price: 29.90, category: "KIDS", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/kids.png" },
-        { id: "fam_1", name: "File com Fritas", weight: "Acompanha: Arroz Branco, Feijoada, Farofa de Bacon, Pure de batata, Salada Verde e macarrao parafuso.", price: 138.50, category: "Refeições Família", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/-12-1filecomfritas.png" },
-        { id: "fam_2", name: "Frango & Carne", weight: "Acompanha: Arroz Branco, Feijoada, Farofa de Bacon, Pure de batata, Salada Verde e macarrao parafuso.", price: 128.40, category: "Refeições Família", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/-12-1frangoecarne.png" },
-        { id: "fam_3", name: "File acebolado", weight: "Acompanha: Arroz Branco, Feijoada, Farofa de Bacon, Pure de batata, Salada Verde e macarrao parafuso.", price: 112.80, category: "Refeições Família", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/-12-1carneacebolada.png" },
-        { id: "p1", name: "Marmita Executiva Frango Parmegiana", weight: "Acompanha Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805317455_Marmita_Executiva_Frango_Parmegiana.png" },
-        { id: "p2", name: "Subline de Carne", weight: "Disco de carne Friboi fatiado, Pepino, Cebola, Tomate, Pepino, Alface, Repolho, Queijo, Molho especial", price: 17.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806259695_0000000000000000000000000000s.png" },
-        { id: "p_requeijao", name: "BIG Requeijão Cremoso", weight: "1 disco de carne Friboi tradicional, Requeijão, alface, cebola, tomate, pepino, calabresa, molho especial", price: 15.80, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-Bigrequeijaocrem.png" },
-        { id: "p4", name: "Camarão Internacional", weight: "Risoto cremoso recheado com camarão, milho, ervilha, calabresa, arroz, batata palha, cheiro verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805413051_ewweew.png" },
-        { id: "p5", name: "BIG Salada X", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-bigsalada.png" },
-        { id: "p6", name: "BIG Egg", weight: "1 disco de carne Friboi tradicional, ovo, alface, cebola, tomate, pepino, calabresa", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-bigegg.png" },
-        { id: "p3", name: "BIG Cheddar Cremoso", weight: "1 disco de carne Friboi tradicional, Cheddar, alface, cebola, tomate, pepino, calabresa, queijo, molho especial", price: 16.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-Bigcheddarcremseeeda.png" },
-        { id: "p7", name: "BIG Barbecue Cremoso", weight: "1 disco de carne Friboi tradicional, calabresa, alface, cebola, tomate, pepino, molho Barbecue", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-bigbarbecue.png" },
-        { id: "p8", name: "BIG Hot Spice", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa, molho especial apimentado", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-bighotspice.png" },
-        { id: "p9", name: "BIG Caramelizado", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa, cebola caramelizada na manteiga", price: 17.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-bigcarameliszad.png" },
-        { id: "p10", name: "BIG Chicken", weight: "1 Frango Krispy, alface, cebola, tomate, pepino, Steak Perdigão", price: 18.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-frangocripsy.png" },
-        { id: "p11", name: "BIG Holandês", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa, molho de carne moída e Requeijão", price: 19.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-bigholansedesdacnce.png" },
-        { id: "p12", name: "BIG Bacon Mussarela", weight: "1 disco de carne Friboi tradicional, alface, cebola, tomate, pepino, calabresa, molho tasty, Bacon, Queijo Mussarela", price: 19.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-baconmussarela.png" },
-        { id: "p13", name: "BIG Cheddar Duplo", weight: "2 disco de carne Friboi tradicional, Cheddar, alface, cebola, tomate, pepino, calabresa", price: 23.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-Bigcheddarduplo.png" },
-        { id: "p14", name: "BIG Bacon Triplo", weight: "3 disco de carne Friboi tradicional, Bacon, alface, cebola, tomate, pepino, calabresa, molho especial", price: 24.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-bigbacontriplo.png" },
-        { id: "p15", name: "BIG Tudo", weight: "2 disco de carne Friboi tradicional, Bacon, alface, cebola, tomate, pepino, calabresa, salsicha, cheddar, ovo, batata palha", price: 28.90, category: "Hambúrguer", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/igres/2-Bigtudo.png" },
-        { id: "p16", name: "Subline de Frango", weight: "Steak de frango perdigão fatiado, Cebola, Tomate, Alface, Repolho, Queijo, Molho especial", price: 17.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806282305_dsds.png" },
-        { id: "p17", name: "Subline de Bacon Carne e Cheddar", weight: "Disco de carne Friboi fatiado, Cebola, Tomate, Alface, Pepino, Repolho, Queijo, Molho especial", price: 18.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806300866_0000000000000000000sub.png" },
-        { id: "p_sub_nuggets", name: "Subline de Nuggets Crocante", weight: "Nuggets de frango crocantes fatiados, Cebola, Tomate, Alface, Molho especial, pepino, Repolho", price: 19.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/1--------------nuggets.png" },
-        { id: "p_sub_defumado", name: "Subline de Frango Defumado com Creem Chesse", weight: "Frango defumado artesanal em cubos com requeijao queijo mussarela cream chesse, Cebola, Tomate, Alface, Pepino, Repolho, Molho especial", price: 24.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/1-------Frango%20Defumado.png" },
-        { id: "p_sub_teriyaki", name: "Subline de Frango Teriyaki Oriental", weight: "Tiras de frango grelhadas ao molho Teriyaki, Gergelim, Cebola, Tomate, Alface, pepino, Repolho", price: 26.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/1--------------teriyaki.png" },
-        { id: "p_sub_fraldinha", name: "Subline de Fraldinha Hot", weight: "Fraldinha desfiada artesanal, Molho Hot Spice, Cebola, Tomate, Alface, molho barbecue, pepino , Repolho", price: 26.90, category: "SubLine", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/1---------------Fraldinha.png" },
-        { id: "p18", name: "Marmita Executiva Frango", weight: "Frango grelhado acompanha Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805336813_Marmita_Executiva_Frango.png" },
-        { id: "p19", name: "Marmita Executiva de Salmão empanado", weight: "Salmão empanado grelhado acompanha Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/------21.png" },
-        { id: "p20", name: "Marmita Executiva Carne", weight: "Carne grelhada acompanha Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805371216_Marmita_Executiva_Carne.png" },
-        { id: "p21", name: "Marmita Executiva Toscana", weight: "Toscana grelhada acompanha Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho, salada verde", price: 22.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805467841_Marmita_Executiva_Toscana.png" },
-        { id: "p22", name: "Jantar Executivo Presidencial de Carne Acebolada", weight: "Carne grelhada, cebola caramelizada, Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho", price: 23.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805488131_------w_(2).png" },
-        { id: "p23", name: "Jantar Executivo Presidencial de Strogonoff", weight: "Strogonoff de frango, milho e ervilha, Batata palha, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho", price: 24.90, category: "Marmitas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805509789_------w_(1).png" },
-{ id: "c_piscina_cheddar", name: "Piscina de Cheddar Burger + Batata", weight: "acompanha piscina de cheddar cremoso 1 Big Cheddar Cremoso suculento cortado, 1 porção de Batata Frita P crocante", price: 26.90, category: "Combos", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/111-----PISCINACHEDDARBURGUERMAISBATATA.png" },
-{ id: "c_creamline", name: "Combo CreamLine", weight: "1 Big Cheddar Cremoso, 1 Batata Frita P e 1 Coca-Cola lata.", price: 26.90, category: "Combos", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/111-----Combo-CreamLine.png" },
-        { id: "p24", name: "COMBO SUBLINE", weight: "2 SubLine um de carne e outro de frango com batata frita e molhos especiais", price: 63.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776804918411_-------w1.png" },
-        { id: "p25", name: "COMBO NETFLIX", weight: "2 Hamburguês de cheddar, Batata Frita, 2 Pizza Broto calabresa, Aneis Cebola Empanada, Queijo Cheddar, Bacon", price: 125.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776804937097_000000000000000000000000000000000000g.png" },
-        { id: "p26", name: "COMBO BIG LINE TRIPLO", weight: "3 Hamburguês de Cheddar, Batata Frita, Nuggets, Aneis Cebola Empanada, Queijo Cheddar, Bacon", price: 128.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776804959351_COMBO_BIG_LINE_TRIPLO.png" },
-        { id: "p27", name: "COMBO BIG DOG", weight: "2 Dog Cheddar, Batata Frita, Nuggets, Aneis Cebola Empanada, Queijo Cheddar, Bacon", price: 110.85, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805014022_COMBO_BIG_DOG.png" },
-        { id: "p28", name: "Batata Frita P", weight: "Porção de fritas Pequena para uma pessoa", price: 16.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805032005_Batata_Frita_G.png" },
-        { id: "p29", name: "Batata Frita M", weight: "Porção de fritas media para duas pessoas", price: 18.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805032005_Batata_Frita_G.png" },
-        { id: "p30", name: "Batata Frita G", weight: "Porção de fritas Grande para 3 pessoas", price: 23.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805032005_Batata_Frita_G.png" },
-        { id: "p31", name: "Batata de Marechal", weight: "Adiciona batata frita, calabresa, frango", price: 28.90, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/Gemini_Generated_Image_6lsz5b6lsz5b6lsz.png" },
-        { id: "p32", name: "Nugget Crocante Unidade", weight: "Unidade de Nuggets adicione quantas quiser", price: 2.99, category: "Lanches", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805081823_Nugget_Crocante_Unidade.png" },
-        { id: "p33", name: "Dog Padrão", weight: "Uma salsicha, Milho e ervilha, molho especial, carne moída, batata palha", price: 11.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/11000====dogpadrao.png" },
-        { id: "p_sabor", name: "Dog Sabor", weight: "Uma salsicha, Milho e ervilha, molho especial, carne moída, batata palha, alface, cenourinha ralada", price: 14.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/11000====dogsalada.png" },
-        { id: "p35", name: "Dog Bacon", weight: "Uma salsichas, bacon, Milho e ervilha, molho especial, carne moída, batata palha", price: 18.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/11000====dogbacon.png" },
-        { id: "p36", name: "Dog Cheddar", weight: "Uma salsichas, Milho e ervilha, molho especial, carne moída, batata palha, queijo cheddar", price: 19.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/11000====dogcheddar.png" },
-        { id: "p_tudo_c", name: "Dog Tudo Completo", weight: "duas salsichas, Milho e ervilha, molho especial, carne moída, batata palha, queijo cheddar,queijo, calabresa,bacon,pure,", price: 24.90, category: "Cachorro Quente", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/11000====dogtudo.png" },
-        { id: "p37", name: "Pizza Broto Portuguesa", weight: "Queijo, presunto, pimentão, azeitona, cebola, milho e ervilha, tomate, ovo cozido, oregano", price: 13.90, category: "Mini Pizzas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805101947_Pizza_Broto_Portuguesa.png" },
-        { id: "p38", name: "Pizza Broto Calabresa", weight: "Queijo Moçarella, orégano, calabresa", price: 8.90, category: "Mini Pizzas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805121624_Pizza_Broto_Calabresa.png" },
-        { id: "p39", name: "Pizza Broto Mussarela", weight: "Queijo, orégano", price: 8.90, category: "Mini Pizzas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805182109_Pizza_Broto_Mussarela.png" },
-        { id: "p40", name: "Pizza Broto Tres Queijos", weight: "Queijo, orégano, queijo Cheddar", price: 12.90, category: "Mini Pizzas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805182109_Pizza_Broto_Mussarela.png" },
-        { id: "p41", name: "Macarronada Carne moída", weight: "Molho especial, carne moída, milho, ervilha, batata palha, macarrão Penne", price: 19.90, category: "Macarronadas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806183506_eewwe.png" },
-        { id: "p42", name: "Macarronada Turbo", weight: "Molho especial, carne moída, milho, ervilha, batata palha, macarrão Penne, calabresa, bacon", price: 24.90, category: "Macarronadas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806203876_weew.png" },
-        { id: "p43", name: "Macarronada Cheddar Queijos", weight: "Molho especial, carne moída, milho, ervilha, batata palha, macarrão fetuchine, queijo Cheddar", price: 24.90, category: "Macarronadas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806222968_ewe.png" },
-        { id: "p44", name: "Coca-Cola Lata", weight: "320ml Refrigerante Coca-Cola Lata", price: 6.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805908258_Coca-Cola_Lata.png" },
-        { id: "p45", name: "Guaraná Lata", weight: "320ml Refrigerante Guaraná Lata", price: 6.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805921732_0000latagua.png" },
-        { id: "p46", name: "Guaraná 1L", weight: "1L Refrigerante Guaraná Litro", price: 12.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805945732_ew.png" },
-        { id: "p47", name: "Guaraná Jesus Lata", weight: "Refrigerante Guaraná Jesus Lata 260ml", price: 6.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805961184_0000jesu.png" },
-        { id: "p48", name: "Heineken Vidro", weight: "Heineken Vidro 250ML", price: 6.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776805987750_ssdds.png" },
-        { id: "p49", name: "Coca-Cola 1L Tradicional", weight: "1 L Refrigerante Coca-Cola Litro", price: 13.99, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806012542_xc.png" },
-        { id: "p50", name: "Agua Mineral", weight: "Garrafa de agua de 500 ML Mineral", price: 3.90, category: "Bebidas", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/ecs/1776806034299_---001.png" },
-        { id: "p51", name: "Executivo Presidencial de Picanha Bovina", weight: "Acompanha Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho", price: 26.90, category: "Marmitas", img: "https://cxpdwntsjvyvyglkwgbj.supabase.co/storage/v1/object/public/pics/------oio%20(2).png" },
-        { id: "p52", name: "Churrasco Misto Exc de Carne, Toscana e Frango", weight: "Acompanha Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho", price: 22.90, category: "Marmitas", img: "https://cxpdwntsjvyvyglkwgbj.supabase.co/storage/v1/object/public/pics/------oio%20(3).png" },
-        { id: "p53", name: "Churrasco Exc de Carne e Toscana", weight: "Acompanha Batata frita, Macarrão, farofa de bacon, Pure de batata, arroz branco de alho", price: 19.90, category: "Marmitas", img: "https://cxpdwntsjvyvyglkwgbj.supabase.co/storage/v1/object/public/pics/------oio%20(1).png" },
-        { id: "p54", name: "Feijoadinha 500 ml", weight: "feijoada de 500 ml acompanha calabresa sadia, bacon fatiado e feijao preto saboroso", price: 6.90, category: "Adicionais", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/--------feiojo.png" },
-        { id: "p55", name: "Farofa de Bacon & Calabresa", weight: "Na farofa de bacon acompanha farofa, manteiga corante, bacon fatiado picado, calabresa fatiada picada, crocante", price: 6.90, category: "Adicionais", img: "https://shscuqqqezibwkibhyix.supabase.co/storage/v1/object/public/Red/---------------farofa.png" }
-    ];
-
-        const catalogCategories = [
-            { name: "Hambúrguer", icon: "fa-solid fa-burger", order: 1 },
-            { name: "KIDS", icon: "fa-solid fa-child", order: 1.5 },
-            { name: "SubLine", icon: "fa-solid fa-burger", order: 2 },
-            { name: "Marmitas", icon: "fa-solid fa-drumstick-bite", order: 3 },
-            { name: "Adicionais", icon: "fa-solid fa-plus", order: 3.1 },
-            { name: "Refeições Família", icon: "fa-solid fa-users", order: 3.2 },
-            { name: "Cachorro Quente", icon: "fa-solid fa-hotdog", order: 3.5 },
-            { name: "Combos", icon: "fa-solid fa-boxes-stacked", order: 4 },
-            { name: "Petiscos", icon: "fa-solid fa-shrimp", order: 5 },
-            { name: "Mini Pizzas", icon: "fa-solid fa-pizza-slice", order: 7 },
-            { name: "Macarronadas", icon: "fa-solid fa-drumstick-bite", order: 8 },
-            { name: "Bebidas", icon: "fa-solid fa-beer-mug-empty", order: 10 }
-        ];
-
-        window.toggleMenu = (show) => {
-            const modal = document.getElementById('menu-modal');
-            if(show) {
-                modal.style.display = 'flex';
-                const grid = document.getElementById('menu-items-grid');
-                grid.innerHTML = "";
-                
-                const sortedCats = [...catalogCategories].sort((a, b) => (a.order || 0) - (b.order || 0));
-                
-                sortedCats.forEach(cat => {
-                    const catProds = catalogData.filter(p => p.category === cat.name);
-                    
-                    if(catProds.length > 0) {
-                        const header = document.createElement('div');
-                        header.style.gridColumn = "1 / -1";
-                        header.style.textAlign = "left";
-                        header.style.padding = "10px 0";
-                        header.style.borderBottom = "1px solid var(--border)";
-                        header.style.marginTop = "15px";
-                        header.innerHTML = `<h3 style="color:var(--primary); text-transform: uppercase; font-size: 14px; letter-spacing: 1px;"><i class="${cat.icon || 'fa-solid fa-tag'}"></i> ${cat.name}</h3>`;
-                        grid.appendChild(header);
-
-                        catProds.forEach((p) => {
-                            const card = document.createElement('div');
-                            card.className = `menu-card`;
-                            card.style.cursor = 'pointer';
-                            card.onclick = () => {
-                                document.getElementById('detail-img').src = p.img;
-                                document.getElementById('detail-title').innerText = p.name;
-                                document.getElementById('detail-desc').innerText = p.weight;
-                                document.getElementById('product-detail-modal').style.display = 'flex';
-                            };
-                            card.innerHTML = `
-                                <img src="${p.img}">
-                                <div style="padding:10px">
-                                    <strong style="display:block; color:var(--primary)">${p.name}</strong>
-                                    <p style="font-size:11px; margin-top:5px; color:#64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.weight}</p>
-                                </div>
-                            `;
-                            grid.appendChild(card);
-                        });
-                    }
-                });
-            } else {
-                modal.style.display = 'none';
-            }
-        };
-
+        let currentFilter = 'pago_confirmado';
         let shoppingList = [];
-    let showCompleted = false;
 
         onValue(ref(db, 'shoppingList'), (snapshot) => {
             shoppingList = snapshot.val() || [];
             renderShoppingList();
         });
-
-        window.toggleShoppingList = (show) => {
-            const modal = document.getElementById('shopping-list-modal');
-            modal.style.display = show ? 'flex' : 'none';
-        };
-
-        window.togglePendingModal = (show) => {
-            const modal = document.getElementById('pending-modal');
-            modal.style.display = show ? 'flex' : 'none';
-            if (show) renderPendingOrders();
-        };
-
-        function renderPendingOrders() {
-            const container = document.getElementById('pending-orders-list');
-            container.innerHTML = "";
-            
-            const list = Object.entries(allOrdersData)
-                .filter(([_, o]) => o.status === 'pendente')
-                .sort((a, b) => b[1].timestamp - a[1].timestamp);
-
-            if (list.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding: 20px;">Nenhum pedido aguardando aprovação ou pagamento no momento.</p>';
-                return;
-            }
-
-            list.forEach(([key, o]) => {
-                const itemsStr = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : 'Sem itens';
-                const totalVal = o.total ? parseFloat(o.total).toFixed(2) : '0.00';
-                const div = document.createElement('div');
-                div.style = "padding: 15px; border: 1px solid var(--border); border-radius: 10px; background: #fff; border-left: 5px solid var(--warning); box-shadow: 0 2px 5px rgba(0,0,0,0.05);";
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <div style="flex:1;">
-                            <strong style="font-size:16px; color:var(--text-main); display:block;">${o.cliente ? o.cliente.nome.toUpperCase() : 'CLIENTE DESCONHECIDO'}</strong>
-                            <div style="font-size:13px; margin-top:5px; color:#b45309; font-weight: bold;">
-                                <i class="fa-solid fa-wallet"></i> FORMA DE PAGTO: ${o.paymentMethod ? o.paymentMethod.toUpperCase() : 'NÃO INFORMADO'}
-                            </div>
-                            <div style="font-size:13px; color:var(--text-dim); margin-top:5px;">
-                                <i class="fa-solid fa-list"></i> <strong>ITENS:</strong> ${itemsStr}
-                            </div>
-                        </div>
-                        <div style="text-align:right; min-width:120px;">
-                            <span style="display:block; font-weight:900; color:var(--primary); font-size:18px;">R$ ${totalVal}</span>
-                            <span style="font-size:11px; color:var(--text-dim);"><i class="fa-solid fa-clock"></i> ${new Date(o.timestamp).toLocaleTimeString()}</span>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
 
         window.addShoppingItem = () => {
             const nameInput = document.getElementById('shop-item-name');
@@ -713,7 +383,8 @@
                 checked: false
             };
             
-            set(ref(db, 'shoppingList'), [...shoppingList, newItem]);
+            const newList = Array.isArray(shoppingList) ? [...shoppingList, newItem] : [newItem];
+            set(ref(db, 'shoppingList'), newList);
             nameInput.value = '';
             qtyInput.value = '';
         };
@@ -725,119 +396,367 @@
             set(ref(db, 'shoppingList'), newList);
         };
 
-        window.clearShoppingList = () => {
-            if(confirm("TEM CERTEZA QUE QUER LIMPAR A LISTA?\n\n⚠️ ATENÇÃO ATENÇÃO! ⚠️\n\nEssa ação apagará todos os itens permanentemente.")) {
-                set(ref(db, 'shoppingList'), null);
-            }
-        };
-
-        window.toggleCompletedList = () => {
-        showCompleted = !showCompleted;
-        renderShoppingList();
-    };
-
-    function renderShoppingList() {
-        const container = document.getElementById('shopping-items-container');
-        container.innerHTML = "";
-        
-        const activeItems = shoppingList.filter(item => !item.checked);
-        const completedItems = shoppingList.filter(item => item.checked);
-
-        if (activeItems.length === 0 && completedItems.length === 0) {
-            container.innerHTML = '<p style="color:var(--text-dim); text-align:center;">Lista vazia</p>';
-            return;
-        }
-
-        activeItems.forEach(item => {
-            const row = document.createElement('div');
-            row.style.display = 'flex';
-            row.style.alignItems = 'center';
-            row.style.gap = '10px';
-            row.style.padding = '10px';
-            row.style.background = '#f8fafc';
-            row.style.borderRadius = '8px';
-            row.style.border = '1px solid var(--border)';
-            row.innerHTML = `
-                <input type="checkbox" onclick="toggleShopCheck(${item.id})" style="width:18px; height:18px; cursor:pointer;">
-                <span style="flex:1; font-weight:600;">${item.name}</span>
-                <span style="color:var(--primary); font-weight:800; margin-right: 5px;">${item.qty}</span>
-                <i class="fa-solid fa-trash" style="color: #ef4444; cursor: pointer; font-size: 14px;" onclick="removeShoppingItem(${item.id})"></i>
-            `;
-            container.appendChild(row);
-        });
-
-        if (completedItems.length > 0) {
-            const toggleBtn = document.createElement('button');
-            toggleBtn.style.width = "100%";
-            toggleBtn.style.padding = "10px";
-            toggleBtn.style.marginTop = "10px";
-            toggleBtn.style.background = "#f1f5f9";
-            toggleBtn.style.border = "none";
-            toggleBtn.style.borderRadius = "8px";
-            toggleBtn.style.cursor = "pointer";
-            toggleBtn.style.color = "var(--text-dim)";
-            toggleBtn.style.fontWeight = "bold";
-            toggleBtn.style.fontSize = "12px";
-            toggleBtn.style.display = "flex";
-            toggleBtn.style.justifyContent = "space-between";
-            toggleBtn.style.alignItems = "center";
-            toggleBtn.innerHTML = `<span><i class="fa-solid fa-check-double"></i> CONCLUÍDOS (${completedItems.length})</span> <i class="fa-solid ${showCompleted ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>`;
-            toggleBtn.onclick = () => window.toggleCompletedList();
-            container.appendChild(toggleBtn);
-
-            if (showCompleted) {
-                const completedContainer = document.createElement('div');
-                completedContainer.style.display = 'flex';
-                completedContainer.style.flexDirection = 'column';
-                completedContainer.style.gap = '8px';
-                completedContainer.style.marginTop = '10px';
-
-                completedItems.forEach(item => {
-                    const row = document.createElement('div');
-                    row.style.display = 'flex';
-                    row.style.alignItems = 'center';
-                    row.style.gap = '10px';
-                    row.style.padding = '10px';
-                    row.style.background = '#f8fafc';
-                    row.style.borderRadius = '8px';
-                    row.style.border = '1px solid var(--border)';
-                    row.style.opacity = '0.6';
-                    row.innerHTML = `
-                        <input type="checkbox" checked onclick="toggleShopCheck(${item.id})" style="width:18px; height:18px; cursor:pointer;">
-                        <span style="flex:1; font-weight:600; text-decoration:line-through; color:var(--text-dim);">${item.name}</span>
-                        <span style="color:var(--primary); font-weight:800; margin-right: 5px;">${item.qty}</span>
-                        <i class="fa-solid fa-trash" style="color: #ef4444; cursor: pointer; font-size: 14px;" onclick="removeShoppingItem(${item.id})"></i>
-                    `;
-                    completedContainer.appendChild(row);
-                });
-                container.appendChild(completedContainer);
-            }
-        }
-    }
-
         window.removeShoppingItem = (id) => {
             const newList = shoppingList.filter(item => item.id !== id);
             set(ref(db, 'shoppingList'), newList);
         };
 
-        setInterval(() => {
-            document.querySelectorAll('.timer-badge').forEach(el => {
-                const start = parseInt(el.dataset.start);
-                const diff = Math.floor((Date.now() - start) / 1000);
-                const min = Math.floor(diff / 60);
-                const sec = diff % 60;
+        window.clearShoppingList = () => {
+            if(confirm("Deseja apagar todos os itens da lista?")) {
+                set(ref(db, 'shoppingList'), null);
+            }
+        };
+
+        function renderShoppingList() {
+            const container = document.getElementById('shopping-items-container');
+            container.innerHTML = "";
+            
+            if (!shoppingList || shoppingList.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Lista vazia</p>';
+                return;
+            }
+
+            shoppingList.forEach(item => {
+                const row = document.createElement('div');
+                row.style.cssText = "display:flex; align-items:center; gap:10px; padding:12px; background:white; border-radius:10px; border:1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.02);";
+                if(item.checked) row.style.opacity = "0.5";
+
+                row.innerHTML = `
+                    <input type="checkbox" ${item.checked ? 'checked' : ''} onclick="toggleShopCheck(${item.id})" style="width:20px; height:20px; accent-color:var(--green);">
+                    <div style="flex:1; font-size:14px; font-weight:600; ${item.checked ? 'text-decoration:line-through; color:#999;' : ''}">
+                        ${item.name}
+                    </div>
+                    <div style="background:#f0f0f0; padding:2px 8px; border-radius:5px; font-weight:bold; font-size:12px; color:var(--primary);">
+                        ${item.qty}
+                    </div>
+                    <i class="fa-solid fa-trash" style="color:#ccc; padding:5px;" onclick="removeShoppingItem(${item.id})"></i>
+                `;
+                container.appendChild(row);
+            });
+        }
+    let lastKnownOrderCount = 0;
+    let lastOrderDataString = "";
+
+    // --- Navegação ---
+        window.showSec = (id, el) => {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        };
+
+        window.filterStatus = (status, el) => {
+            currentFilter = status;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            renderOrders();
+        };
+
+        // --- Lógica de Pedidos ---
+        let allOrders = {};
+
+        onValue(ref(db, 'orders'), (snapshot) => {
+        allOrders = snapshot.val() || {};
+        const keys = Object.keys(allOrders);
+        const currentDataString = JSON.stringify(allOrders);
+        
+        // Som de novo pedido ou atualização de status
+        if(lastOrderDataString !== "" && currentDataString !== lastOrderDataString) {
+            const sound = document.getElementById('sound-new');
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log("Erro som:", e));
+
+            // Se for novo pedido (contagem aumentou)
+            if(keys.length > lastKnownOrderCount) {
+                const banner = document.getElementById('notif-banner');
+                banner.style.display = 'block';
+                setTimeout(() => banner.style.display = 'none', 5000);
+            }
+        }
+        
+        lastKnownOrderCount = keys.length;
+        lastOrderDataString = currentDataString;
+        
+        renderOrders();
+        updateStats();
+    });
+
+        function renderOrders() {
+            const container = document.getElementById('orders-container');
+            container.innerHTML = "";
+
+            const filtered = Object.entries(allOrders)
+                .filter(([_, o]) => {
+                    if (currentFilter === 'pago_confirmado') return o.status === 'pago_confirmado' && o.kitchenReady !== true;
+                    if (currentFilter === 'rota') return o.status === 'preparando' || o.status === 'caminho';
+                    return o.status === currentFilter;
+                })
+                .sort((a, b) => b[1].timestamp - a[1].timestamp);
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:40px; color:#999;">Nenhum pedido aqui.</div>`;
+                return;
+            }
+
+            filtered.forEach(([key, o]) => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
                 
-                el.innerText = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+                const minElapsed = Math.floor((Date.now() - o.timestamp) / 60000);
+                if(minElapsed > 40) card.style.borderColor = 'var(--primary)';
+                else if(minElapsed > 20) card.style.borderColor = 'var(--orange)';
+                else card.style.borderColor = 'var(--green)';
+
+                const client = o.cliente || {};
+                const itemsHtml = (o.items || []).map(i => {
+                    const isSubline = i.name.toLowerCase().includes("subline montado");
+                    return `
+                        <b>${i.qty}x</b> ${i.name}
+                        ${i.meatPoint ? `<br><span style="display:inline-block; margin-top:3px; background:#ef4444; color:white; padding:2px 6px; border-radius:4px; font-weight:900; font-size:10px; width:fit-content; border: 1px solid #000; animation: blink 1s infinite;">🥩 PONTO: ${i.meatPoint.toUpperCase()}</span>` : ''}
+                        ${isSubline ? `<br><button onclick='expandSubline(${JSON.stringify(i).replace(/'/g, "&apos;")})' style="margin-top:5px; background:var(--primary); color:white; border:none; padding:8px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;"><i class="fa-solid fa-layer-group"></i> VER MONTAGEM</button>` : ''}
+                    `;
+                }).join('<br>');
                 
-                if (min >= 30) {
-                    el.className = "timer-badge time-red";
-                } else if (min >= 15) {
-                    el.className = "timer-badge time-yellow";
+                card.innerHTML = `
+                    <div class="order-header">
+                        <div class="client-info">
+                            <img src="${client.foto || 'https://via.placeholder.com/40'}">
+                            <div>
+                                <div class="client-name">${client.nome}</div>
+                                <div class="order-id">${client.bairro}</div>
+                            </div>
+                        </div>
+                        <div class="timer" data-time="${o.timestamp}">00:00</div>
+                    </div>
+
+                    <div class="items-list">
+                        <div style="font-size: 10px; color: #999; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">Itens do Pedido:</div>
+                        ${itemsHtml}
+                    </div>
+
+                    <div class="order-footer">
+                        <div></div>
+                        <div style="font-size: 11px; font-weight: bold; color: ${o.deliveryType === 'pickup' ? 'var(--orange)' : 'var(--blue)'}">
+                            ${o.deliveryType === 'pickup' ? '<i class="fa-solid fa-store"></i> RETIRADA' : '<i class="fa-solid fa-truck"></i> ENTREGA'}
+                        </div>
+                    </div>
+
+                    <button class="btn btn-next" style="width: 100%; background: var(--green); margin-top: 10px; padding: 15px; font-size: 15px;" onclick="markAsKitchenReady('${key}')">
+                        <i class="fa-solid fa-check-double"></i> FINALIZAR PRODUÇÃO
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function getNextLabel(status) {
+            if(status === 'pendente') return 'Confirmar';
+            if(status === 'pago_confirmado') return 'Pronto';
+            if(status === 'preparando' || status === 'caminho') return 'Finalizar';
+            return 'Avançar';
+        }
+
+        window.markAsKitchenReady = (key) => {
+            if(confirm("Deseja marcar este pedido como concluído na cozinha?")) {
+                update(ref(db, `orders/${key}`), { kitchenReady: true });
+            }
+        };
+
+        window.expandSubline = (item) => {
+            const modal = document.getElementById('subline-modal');
+            const title = document.getElementById('subline-modal-title');
+            const list = document.getElementById('subline-ingredients-list');
+            
+            title.innerText = item.name;
+            list.innerHTML = "";
+            
+            if(item.ingredients && item.ingredients.length > 0) {
+                item.ingredients.forEach(ing => {
+                    list.innerHTML += `
+                        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border: 1px solid #eee; border-radius: 10px;">
+                            <img src="${ing.img}" style="width: 40px; height: 40px; object-fit: contain;">
+                            <span style="font-weight: bold; font-size: 13px;">${ing.name}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = "<p style='color:#999; text-align:center;'>Ingredientes não detalhados.</p>";
+            }
+            modal.style.display = 'flex';
+        };
+
+        window.nextStatus = async (key, current) => {
+            const snap = await get(ref(db, `orders/${key}`));
+            const o = snap.val();
+            if(!o) return;
+            
+            const fone = o.cliente.contato.replace(/\D/g, '');
+            const nome = o.cliente.nome.toUpperCase();
+            const linkApp = "https://redlinedelivery1212-droid.github.io/RedLineDelivery/#" + fone;
+            const linha = "==========================";
+
+            if (current === 'pendente') {
+                await update(ref(db, `orders/${key}`), { status: 'pago_confirmado' });
+                const msg = "   *REDLINE DELIVERY*\n" + linha + "\n\n*PEDIDO CONFIRMADO!*\n\nOlá, " + nome + "!\nJá estamos preparando tudo com muito capricho!\n\nAcompanhe o status por aqui:\n" + linkApp + "\n\nOBRIGADO!";
+                window.open("https://wa.me/55" + fone + "?text=" + encodeURIComponent(msg), '_blank');
+            } 
+            else if (current === 'pago_confirmado') {
+                if (o.deliveryType === 'pickup') {
+                    await update(ref(db, `orders/${key}`), { status: 'preparando', driverId: 'balcao', driverName: 'BALCÃO' });
+                    const msg = "   *REDLINE DELIVERY*\n" + linha + "\n\n*PEDIDO PRONTO PARA RETIRADA!*\n\nOlá, " + nome + "!\nSeu pedido já está prontinho! Pode vir buscar aqui na loja.\n\nLocalização:\nhttps://maps.app.goo.gl/TfYr7RXVTg3hz3AF8";
+                    window.open("https://wa.me/55" + fone + "?text=" + encodeURIComponent(msg), '_blank');
                 } else {
-                    el.className = "timer-badge time-green";
+                    const drv = prompt("SELECIONE O ENTREGADOR:\n1 - Carlos\n2 - Convidado");
+                    if (!drv) return;
+                    
+                    const drvId = drv === "1" ? "carlos" : "convidado";
+                    const drvName = drv === "1" ? "Carlos" : "Convidado";
+                    const drvFone = drv === "1" ? "559887254139" : "559885039822";
+
+                    await update(ref(db, `orders/${key}`), { status: 'preparando', driverId: drvId, driverName: drvName });
+                    
+                    const msgD = "*NOVA ENTREGA DISPONÍVEL*\n" + linha + "\n\nO pedido de *" + nome + "* está pronto para entrega!\n\nAbra o painel para coletar.";
+                    window.open("https://wa.me/" + drvFone + "?text=" + encodeURIComponent(msgD), '_blank');
                 }
+            }
+            else if (current === 'preparando' || current === 'caminho') {
+                if(confirm("Marcar como entregue e pago?")) {
+                    await update(ref(db, `orders/${key}`), { status: 'pago', deliveredAt: Date.now() });
+                }
+            }
+        };
+
+        window.deleteOrder = (key) => {
+        if(confirm("Deseja realmente excluir este pedido?")) {
+            remove(ref(db, `orders/${key}`));
+        }
+    };
+
+    window.openCommModal = async (key) => {
+        const snap = await get(ref(db, `orders/${key}`));
+        const o = snap.val();
+        if(!o) return;
+
+        const modal = document.getElementById('modal-comm');
+        const fone = o.cliente.contato.replace(/\D/g, '');
+        const nome = o.cliente.nome.toUpperCase();
+        const total = o.total.toFixed(2);
+        const linkApp = "https://redlinedelivery1212-droid.github.io/RedLineDelivery/#" + fone;
+        const linha = "==========================";
+
+        document.getElementById('comm-client-name').innerText = nome;
+        modal.style.display = 'flex';
+
+        document.getElementById('m-btn-confirm').onclick = () => {
+            const itensStr = o.items.map(i => "  > " + i.qty + "x " + i.name).join('\n');
+            const msg = "   *REDLINE DELIVERY*\n" + linha + "\n\n*PEDIDO CONFIRMADO!*\nCliente: " + nome + "\n\n*ITENS:*\n" + itensStr + "\n\nJá estamos preparando tudo!\n\nAcompanhe por aqui:\n" + linkApp + "\n\nOBRIGADO!";
+            window.open("https://wa.me/55" + fone + "?text=" + encodeURIComponent(msg), '_blank');
+            modal.style.display = 'none';
+        };
+
+        document.getElementById('m-btn-pix').onclick = () => {
+            const msg = "   *REDLINE DELIVERY*\n" + linha + "\n\n*AGUARDANDO PAGAMENTO*\nOlá, " + nome + "!\n\nRecebemos seu pedido. Para iniciar o preparo, realize o PIX para a chave abaixo:\n\n*CHAVE PIX (CELULAR):* 98984376365\n\nEnvie o comprovante para confirmarmos!";
+            window.open("https://wa.me/55" + fone + "?text=" + encodeURIComponent(msg), '_blank');
+            modal.style.display = 'none';
+        };
+
+        document.getElementById('m-btn-delay').onclick = () => {
+            const msg = "   *REDLINE DELIVERY*\n" + linha + "\n\n*AVISO DE ATRASO*\nOlá, " + nome + "!\n\nPedimos desculpas, mas devido ao grande volume de pedidos, sua entrega sofrerá um pequeno atraso de 15 a 20 minutos.\n\nJá estamos finalizando seu pedido!";
+            window.open("https://wa.me/55" + fone + "?text=" + encodeURIComponent(msg), '_blank');
+            modal.style.display = 'none';
+        };
+
+        document.getElementById('m-btn-track').onclick = () => {
+            const msg = "Olá, *" + nome + "*! Acompanhe o status do pedido em tempo real clicando no seu link exclusivo abaixo:\n\nCLIQUE AQUI \n" + linkApp;
+            window.open("https://wa.me/55" + fone + "?text=" + encodeURIComponent(msg), '_blank');
+            modal.style.display = 'none';
+        };
+    };
+
+    window.contactClient = (phone) => {
+        const num = phone.replace(/\D/g, '');
+        window.open(`https://wa.me/55${num}`, '_blank');
+    };
+
+        window.copyQuickMsg = (type) => {
+            const linha = "==========================";
+            let msg = "";
+            if(type === 1) {
+                msg = "   *REDLINE DELIVERY*\n" + linha + "\n\nBoa noite! Já estamos funcionando. 🚀\n\nFaça seu pedido clicando no link abaixo:\nhttps://redlinedelivery1212-droid.github.io/RedLineDelivery/\n\n" + linha;
+            } else if(type === 2) {
+                msg = "   *REDLINE DELIVERY*\n" + linha + "\n\n📍 *NOSSO ENDEREÇO*\n\nTravessa Projetada, 120\nBairro: Vila Nova\nReferência: Rua da Alana Bronze\n\nLocalização no Google Maps:\nhttps://maps.app.goo.gl/TfYr7RXVTg3hz3AF8\n\n" + linha;
+            } else if(type === 3) {
+                msg = "   *REDLINE DELIVERY*\n" + linha + "\n\n🍔 *CARDÁPIO ONLINE*\n\nAcesse nosso cardápio completo e monte seu pedido aqui:\nhttps://redlinedelivery1212-droid.github.io/RedLineDelivery/\n\n" + linha;
+            }
+            navigator.clipboard.writeText(msg).then(() => alert("Mensagem Copiada!"));
+        };
+
+        // --- Configurações ---
+        onValue(ref(db, 'settings/store_status'), (snap) => {
+            const data = snap.val() || {};
+            document.getElementById('cfg-closed').checked = data.closedToday || false;
+            document.getElementById('cfg-open').checked = data.forcedOpen || false;
+            document.getElementById('cfg-pickup').checked = data.onlyPickup || false;
+            
+            const badge = document.getElementById('store-badge-status');
+            const dot = badge.querySelector('.status-dot');
+            const text = badge.querySelector('span:last-child');
+            
+            if(data.forcedOpen || (!data.closedToday && isWorkingHour())) {
+                dot.className = "status-dot status-open";
+                text.innerText = "ABERTA";
+            } else {
+                dot.className = "status-dot status-closed";
+                text.innerText = "FECHADA";
+            }
+        });
+
+        onValue(ref(db, 'settings/high_demand'), (snap) => {
+            document.getElementById('cfg-demand').checked = snap.val() || false;
+        });
+
+        onValue(ref(db, 'settings/brinde_ativo'), (snap) => {
+            document.getElementById('cfg-brinde').checked = snap.val() || false;
+        });
+
+        window.updateConfig = (field, val) => {
+            update(ref(db, 'settings/store_status'), { [field]: val });
+        };
+
+        window.updateGlobal = (path, val) => {
+            set(ref(db, `settings/${path}`), val);
+        };
+
+        // --- Utilitários ---
+        function updateStats() {
+            let pending = 0;
+            let counts = { cozinha: 0 };
+
+            Object.values(allOrders).forEach(o => {
+                if(o.status === 'pendente') { pending++; }
+                if(o.status === 'pago_confirmado' && !o.kitchenReady) counts.cozinha++;
+            });
+
+            document.getElementById('stat-pending-count').innerText = pending;
+            document.getElementById('count-cozinha').innerText = counts.cozinha;
+        }
+
+        function isWorkingHour() {
+            const hour = new Date().getHours();
+            return hour >= 18 || hour < 1;
+        }
+
+        setInterval(() => {
+            document.querySelectorAll('.timer').forEach(el => {
+                const start = parseInt(el.dataset.time);
+                const diff = Math.floor((Date.now() - start) / 1000);
+                const m = Math.floor(diff / 60);
+                const s = diff % 60;
+                el.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                if(m > 40) el.style.color = 'red';
             });
         }, 1000);
+
     </script>
 </body>
 </html>
